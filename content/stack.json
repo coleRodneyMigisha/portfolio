@@ -1,0 +1,21 @@
+{
+  "confident": [
+    "Python",
+    "SQL",
+    "TypeScript",
+    "Git",
+    "Linux"
+  ],
+  "used": [
+    "Next.js",
+    "React",
+    "PostgreSQL",
+    "Docker",
+    "Bash"
+  ],
+  "learning": [
+    "Apache Airflow",
+    "dbt",
+    "Data Pipeline Orchestration"
+  ]
+}

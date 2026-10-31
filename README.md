@@ -1,17 +1,43 @@
-# Next.js Static Export Project
+# Cole Rodney Migisha — Portfolio
 
-This is a minimal Next.js (App Router) + TypeScript project configured for static HTML export (`output: 'export'` and `images: { unoptimized: true }`). It contains no server-side runtime code, no API routes, and no API keys.
+This is a Next.js (App Router) + TypeScript project configured for static HTML export (`output: 'export'` and `images: { unoptimized: true }`). It contains no server-side runtime code, no API routes, and no API keys.
 
-## Routes Included
+## Content Structure
 
-- `/` (`app/page.tsx`) — Plain text home page
-- `/work/test-project` (`app/work/test-project/page.tsx`) — Plain text project page
-- `404` (`app/not-found.tsx`) — Plain text 404 page (exported to `out/404.html`)
+- `content/site.json` — Profile metadata (`name`, `tagline`, `email`, `linkedin`, `github`, `cv`, `leetcode`, `zindi`). Any field left blank (`""`) is automatically hidden in the UI.
+- `content/stack.json` — Technology lists (`confident`, `used`, `learning`).
+- `content/projects/` — Project Markdown entries (`kind: "project"`).
+- `content/research/` — Research Markdown entries (`kind: "research"`).
 
-## Prerequisites
+## Adding new work
 
-- **Node.js**: v18.18.0 or later (v20+ LTS recommended)
-- **npm**: v9+ (or `pnpm` / `yarn`)
+You can add a new project or research item simply by creating a Markdown file—no code changes are required:
+
+1. **Copy the appropriate template**:
+   - For a project: copy `content/projects/_template.md` to `content/projects/your-slug.md`
+   - For research: copy `content/research/_template.md` to `content/research/your-slug.md`
+   - Note: Any file whose filename starts with `_` (such as `_template.md`) is ignored by the build.
+2. **Fill in all required frontmatter fields**:
+   - `title` (non-empty string)
+   - `slug` (URL-safe lowercase string with hyphens, e.g. `"schema-validation-pipeline"`)
+   - `kind` (`"project"` in `content/projects/`, or `"research"` in `content/research/`)
+   - `summary` (non-empty string)
+   - `status` (non-empty string, e.g. `"Completed"`, `"In Progress"`, `"Working Note"`)
+   - `tags` (YAML list of non-empty strings)
+   - `group` (non-empty string)
+   - `date` (non-empty string, e.g. `"2026-03"`)
+   - `level` (`"full"` or `"short"`):
+     - `"full"` items appear on the home page **and** generate a standalone static route at `/work/[slug]`.
+     - `"short"` items appear on the home page (and open in a compact window) without generating a `/work/[slug]` route.
+   - `team` (`true` or `false` — `true` displays `"Team project"`; never list teammate names)
+   - `image` (string path in `public/`, or `""` if none)
+   - `links` (list of `{ label, url }` objects, or `[]` if none)
+   - `order` (number controlling sort order; lower numbers appear first)
+   - `visible` (`true` to publish, `false` to hide without deleting the file)
+3. **Write the Markdown body** below the second `---`.
+4. **Build and verify**:
+   - Run `npm run build`.
+   - The build validates all frontmatter fields and fails with a message naming the file and field if anything is missing or invalid.
 
 ## Running Locally Outside AI Studio
 
@@ -35,15 +61,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 npm run build
 ```
 
-Running `npm run build` executes `next build`, which compiles the application and writes the static HTML/CSS/JS bundle into the `out/` folder:
-
-- `out/index.html` (`/`)
-- `out/work/test-project.html` (`/work/test-project`)
-- `out/404.html` (404 page)
+Running `npm run build` executes `next build`, validating all content in `content/` and exporting static HTML/CSS/JS into the `out/` folder.
 
 ### 4. Preview the Static `out/` Directory Locally
-
-Because `output: 'export'` produces pure static files, `next start` is not used. Instead, serve the `out` directory with any static file server:
 
 ```bash
 npx serve@latest out
@@ -54,10 +74,3 @@ Or using Python:
 ```bash
 python3 -m http.server 3000 --directory out
 ```
-
-## Deploying Outside AI Studio
-
-You can deploy the generated `out/` folder directly to any static hosting provider:
-
-- **GitHub Pages / Cloudflare Pages / Netlify / Vercel**: Set the build command to `npm run build` and the publish/output directory to `out`.
-- **Nginx / Apache / AWS S3 / Firebase Hosting / Google Cloud Storage**: Upload the contents of the `out/` folder and configure `404.html` as your error document.
