@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Moon, Sun } from 'lucide-react';
 
 type Theme = 'dark' | 'light';
 
@@ -68,16 +69,20 @@ export default function ThemeToggle() {
     }
   };
 
-  const nextLabel = theme === 'dark' ? 'Light' : 'Dark';
+  const nextLabel = theme === 'dark' ? 'light' : 'dark';
 
   return (
     <button
       type="button"
       onClick={handleToggle}
       className="glass-control theme-toggle"
-      aria-label={`Theme: ${theme === 'dark' ? 'Dark' : 'Light'} (switch to ${nextLabel.toLowerCase()} mode)`}
+      aria-label={`Theme: ${theme === 'dark' ? 'Dark' : 'Light'} (switch to ${nextLabel} mode)`}
     >
-      Theme: {theme === 'dark' ? 'Dark' : 'Light'}
+      {theme === 'dark' ? (
+        <Moon className="theme-toggle-icon" aria-hidden="true" strokeWidth={1.75} />
+      ) : (
+        <Sun className="theme-toggle-icon" aria-hidden="true" strokeWidth={1.75} />
+      )}
     </button>
   );
 }

@@ -418,7 +418,19 @@ main:focus {
 }
 
 .theme-toggle {
-  /* Inherits shared liquid glass from .glass-control */
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.theme-toggle-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  display: block;
 }
 
 section[id] {
@@ -763,14 +775,21 @@ section[id] {
   box-shadow: var(--glass-box-shadow-hover);
 }
 
-/* Pause band and heartbeat on hover, keyboard focus, or pause button */
-.band-viewport:hover .band-track,
-.band-viewport:focus-within .band-track,
+/* Pause band and heartbeat on hover (pointer devices), keyboard focus, active touch hold, or pause button */
+.band-viewport:has(:focus-visible) .band-track,
+.band-viewport:active .band-track,
 .band-viewport[data-paused="true"] .band-track,
-.band-viewport:hover .band-card,
-.band-viewport:focus-within .band-card,
+.band-viewport:has(:focus-visible) .band-card,
+.band-viewport:active .band-card,
 .band-viewport[data-paused="true"] .band-card {
   animation-play-state: paused;
+}
+
+@media (hover: hover) {
+  .band-viewport:hover .band-track,
+  .band-viewport:hover .band-card {
+    animation-play-state: paused;
+  }
 }
 
 .band-card-top {
@@ -890,38 +909,11 @@ section[id] {
   text-decoration: underline;
 }
 
-/* Touch devices (hover: none or pointer: coarse) or prefers-reduced-motion: still, swipeable row with scroll snap */
-@media (hover: none), (pointer: coarse) {
-  .band-viewport {
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: var(--gutter);
-    padding-inline: var(--gutter);
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .band-track {
-    animation: none;
-    transform: none;
-  }
-
-  .band-set {
-    padding-right: 0;
-  }
-
-  .band-set-clone {
-    display: none;
-  }
-
+/* Keep cards comfortably sized on narrow phone viewports while drifting */
+@media (max-width: 639.98px) {
   .band-card {
     width: min(84vw, var(--band-card-width));
     flex: 0 0 min(84vw, var(--band-card-width));
-    scroll-snap-align: start;
-    animation: none;
-  }
-
-  .band-pause-btn {
-    display: none;
   }
 }
 
