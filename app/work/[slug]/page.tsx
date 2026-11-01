@@ -36,7 +36,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${item.title} — ${site.name}`,
+    title: `${item.title} | ${site.name}`,
     description: item.summary,
   };
 }

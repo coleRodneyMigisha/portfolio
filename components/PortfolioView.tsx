@@ -125,7 +125,7 @@ export default function PortfolioView({
       } catch {
         // Ignore history errors in restricted iframe environments
       }
-      document.title = `${item.title} — ${site.name}`;
+      document.title = `${item.title} | ${site.name}`;
     },
     [site.name]
   );
@@ -169,7 +169,7 @@ export default function PortfolioView({
             slug: matched.slug,
             growFromWindow: false,
           });
-          document.title = `${matched.title} — ${site.name}`;
+          document.title = `${matched.title} | ${site.name}`;
           return;
         }
       }
@@ -259,7 +259,17 @@ export default function PortfolioView({
     };
   }, [activeItem, handleCloseModal, modalState.mode]);
 
-  const cvHref = site.cv.trim();
+  const stackGroups = useMemo(
+    () => [
+      { label: 'Confident', items: stack.confident },
+      { label: 'Used', items: stack.used },
+      { label: 'Learning', items: stack.learning },
+    ],
+    [stack.confident, stack.learning, stack.used]
+  );
+
+  const heavenCompletions = ['praise', 'peace', 'paradise', 'perfect', 'prayer'];
+
   const isBubbleOpen = modalState.mode === 'bubble' && activeItem !== null;
   const isWindowOpen = modalState.mode === 'window' && activeItem !== null;
 
@@ -410,65 +420,109 @@ export default function PortfolioView({
             onOpenWindow={handleOpenWindow}
           />
 
-          {/* 5. Technology list */}
-          <div className="site-shell">
-            <section
-              id="stack"
-              className="page-section"
-              aria-labelledby="stack-heading"
-            >
+          {/* 5. Technology marquee */}
+          <section
+            id="stack"
+            className="stack-section"
+            aria-labelledby="stack-heading"
+          >
+            <div className="site-shell">
               <div className="section-header" data-reveal>
                 <h2 id="stack-heading" className="section-title">
                   Technology
                 </h2>
               </div>
+            </div>
 
-              <div className="stack-groups">
-                <div className="stack-group" data-reveal data-reveal-index={0}>
-                  <h3 className="stack-group-title">Confident</h3>
-                  <p className="stack-items">{stack.confident.join(' · ')}</p>
-                </div>
-
-                <div className="stack-group" data-reveal data-reveal-index={1}>
-                  <h3 className="stack-group-title">Used</h3>
-                  <p className="stack-items">{stack.used.join(' · ')}</p>
-                </div>
-
-                <div className="stack-group" data-reveal data-reveal-index={2}>
-                  <h3 className="stack-group-title">Learning</h3>
-                  <p className="stack-items">{stack.learning.join(' · ')}</p>
-                </div>
+            <div
+              className="stack-marquee-viewport"
+              tabIndex={0}
+              role="region"
+              aria-label="Technology stack"
+              data-reveal
+            >
+              <div className="stack-marquee-track">
+                {[0, 1].map((copyIndex) => {
+                  const isClone = copyIndex > 0;
+                  return (
+                    <div
+                      key={copyIndex}
+                      className={`stack-marquee-set ${
+                        isClone ? 'stack-marquee-clone' : ''
+                      }`}
+                      aria-hidden={isClone ? 'true' : undefined}
+                    >
+                      {stackGroups.map((group) => (
+                        <div key={group.label} className="stack-marquee-group">
+                          <span className="stack-marquee-group-label">
+                            {group.label}
+                          </span>
+                          <ul className="stack-marquee-list">
+                            {group.items.map((tech) => (
+                              <li key={tech} className="stack-marquee-item">
+                                {tech}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
-            </section>
-          </div>
+            </div>
+          </section>
         </main>
 
         {/* 6. Footer */}
         <footer className="site-footer" data-reveal>
           <div className="site-shell site-footer-inner">
-            <p className="footer-brand">{site.name}</p>
-            <ul className="inline-link-list" aria-label="Footer links">
-              {cvHref.length > 0 && (
-                <li>
-                  <a href={cvHref} target="_blank" rel="noopener noreferrer">
-                    CV (PDF)
-                  </a>
-                </li>
-              )}
-              {visibleSiteLinks
-                .filter((link) => link.key !== 'cv')
-                .map((link) => (
+            <div className="site-footer-top">
+              <p className="footer-brand">{site.name}</p>
+              <ul className="inline-link-list" aria-label="Profile and contact links">
+                {visibleSiteLinks.map((link) => (
                   <li key={link.key}>
                     <a
                       href={link.href}
                       target={link.key === 'email' ? undefined : '_blank'}
-                      rel={link.key === 'email' ? undefined : 'noopener noreferrer'}
+                      rel={
+                        link.key === 'email' ? undefined : 'noopener noreferrer'
+                      }
                     >
                       {link.label}
                     </a>
                   </li>
                 ))}
-            </ul>
+              </ul>
+            </div>
+
+            <div className="footer-code-detail">
+              <div
+                className="heaven-snippet-trigger"
+                tabIndex={0}
+                aria-label="Python import note: from Heaven import P, with autocomplete suggestions"
+                aria-describedby="heaven-autocomplete-list"
+              >
+                <code className="heaven-snippet-code">
+                  <span className="heaven-kw">from</span> Heaven{' '}
+                  <span className="heaven-kw">import</span>{' '}
+                  <span className="heaven-prefix">P</span>
+                </code>
+
+                <ul
+                  id="heaven-autocomplete-list"
+                  className="heaven-autocomplete"
+                  aria-label="Autocomplete suggestions"
+                >
+                  {heavenCompletions.map((word) => (
+                    <li key={word} className="heaven-autocomplete-item">
+                      <span className="heaven-match">{word.slice(0, 1)}</span>
+                      <span>{word.slice(1)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </footer>
       </div>
