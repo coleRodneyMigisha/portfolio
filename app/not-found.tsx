@@ -13,7 +13,7 @@ export default function NotFound() {
       <header className="site-header">
         <div className="site-shell site-header-inner">
           <Link href="/" className="brand-mark">
-            {site.name}
+            {site.brandName}
           </Link>
           <ThemeToggle />
         </div>

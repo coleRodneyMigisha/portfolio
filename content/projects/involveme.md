@@ -2,7 +2,7 @@
 title: "involveMe"
 slug: "involveme"
 kind: "project"
-summary: "A Linux desktop client aiming to work with Google Quick Share."
+summary: "A Linux desktop client that wants to get along with Google Quick Share."
 status: "In development"
 tags:
   - "C++"
@@ -18,4 +18,4 @@ order: 9
 visible: true
 ---
 
-A Linux desktop client aiming to work with Google Quick Share. It compiles and links, but transfers between real devices are still to be tested.
+A Linux desktop client that wants to get along with Google Quick Share. It compiles and links, but transfers between real devices are still to be tested.

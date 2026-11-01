@@ -2,7 +2,7 @@
 title: "Zindi challenges"
 slug: "zindi-challenges"
 kind: "project"
-summary: "Machine learning competition entries, including financial stress prediction from mobile money behaviour, and biodiversity prediction from climate data."
+summary: "Machine learning competition entries, from predicting financial stress using mobile money behaviour to predicting biodiversity using climate data."
 status: "Competition entries"
 tags:
   - "Python"
@@ -20,4 +20,4 @@ order: 10
 visible: true
 ---
 
-Machine learning competition entries, including financial stress prediction from mobile money behaviour, and biodiversity prediction from climate data.
+Machine learning competition entries, from predicting financial stress using mobile money behaviour to predicting biodiversity using climate data.

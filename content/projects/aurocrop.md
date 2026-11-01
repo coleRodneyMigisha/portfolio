@@ -17,4 +17,4 @@ order: 8
 visible: true
 ---
 
-A team project that uses computer vision to tell ripe tomatoes from unripe ones. We also set out to separate sick crops from healthy ones, which we could not get working well. I contributed the original idea and the design.
+A team project that uses computer vision to tell ripe tomatoes from unripe ones. We also tried to separate sick crops from healthy ones, which didn't work as well as we hoped. I brought the original idea and the design.

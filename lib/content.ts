@@ -35,6 +35,7 @@ export interface WorkItem extends WorkFrontmatter {
 
 export interface SiteConfig {
   name: string;
+  brandName: string;
   tagline: string;
   email: string;
   linkedin: string;
@@ -325,6 +326,7 @@ export function getSiteConfig(): SiteConfig {
 
   return {
     name: assertNonEmptyString(raw.name, relativeFilePath, 'name'),
+    brandName: assertNonEmptyString(raw.brandName, relativeFilePath, 'brandName'),
     tagline: assertNonEmptyString(raw.tagline, relativeFilePath, 'tagline'),
     email: assertStringAllowEmpty(raw.email, relativeFilePath, 'email'),
     linkedin: assertStringAllowEmpty(raw.linkedin, relativeFilePath, 'linkedin'),
@@ -337,7 +339,7 @@ export function getSiteConfig(): SiteConfig {
 
 export function getVisibleSiteLinks(site: SiteConfig): Array<{ key: string; label: string; value: string; href: string }> {
   const linkDefinitions: Array<{
-    key: keyof Omit<SiteConfig, 'name' | 'tagline'>;
+    key: keyof Omit<SiteConfig, 'name' | 'brandName' | 'tagline'>;
     label: string;
     isEmail?: boolean;
   }> = [

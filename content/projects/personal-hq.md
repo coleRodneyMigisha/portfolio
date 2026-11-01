@@ -2,7 +2,7 @@
 title: "Personal HQ"
 slug: "personal-hq"
 kind: "project"
-summary: "I keep my daily plans in a paper notebook. This tool turned 33 pages of those notes into a working Notion system, which runs even when my computer is off."
+summary: "I plan my days in a paper notebook. This tool turned 33 pages of those notes into a working Notion system that keeps running even when my computer is off."
 status: "Running"
 tags:
   - "Python"
@@ -22,13 +22,13 @@ visible: true
 
 ## Why
 
-I keep my daily plans in a paper notebook. I wanted that system to work everywhere, without changing how I already plan.
+My daily plans live in a paper notebook. I wanted that system to follow me everywhere, without changing how I already plan.
 
 ## What I did
 
-I designed the system around how the notebook was already used: tasks, carried-over items, weekly goals and projects. Python is only the setup tool. Once built, it runs inside Notion, even when my computer is off.
+I designed it around how the notebook already works: tasks, carried-over items, weekly goals and projects. Python only handles the setup. Once built, everything runs inside Notion, even with my computer off.
 
-The scripts default to a safe dry run, with tests that never touch Notion. A GitHub Action also keeps a contribution calendar up to date.
+The scripts default to a safe dry run, and the tests never touch Notion, so trying things out is safe. A GitHub Action also keeps a contribution calendar up to date.
 
 ## Where it stands
 

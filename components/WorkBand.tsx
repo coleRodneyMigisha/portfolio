@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { WorkItem } from '@/lib/content';
 
 interface WorkBandProps {
@@ -12,6 +12,10 @@ interface WorkBandProps {
 }
 
 const TARGET_SPEED_PX_PER_SEC = 15;
+// A laptop screen is about four times wider than a phone, so 15px/s looks still there
+const WIDE_SCREEN_SPEED_PX_PER_SEC = 32;
+const SLOW_DOWN_MS = 500;
+const MAX_TILT_DEG = 5;
 const FALLBACK_CARD_SLOT_PX = 384; // 360px card + 24px gap
 const CLONE_SET_INDICES = [1, 2, 3] as const;
 
@@ -26,12 +30,20 @@ function isPlainLeftClick(e: React.MouseEvent<HTMLAnchorElement>): boolean {
   );
 }
 
+function isLaptopPointer(): boolean {
+  return window.matchMedia(
+    '(hover: hover) and (pointer: fine) and (min-width: 1024px) and (prefers-reduced-motion: no-preference)'
+  ).matches;
+}
+
 function BandCard({
   item,
+  index,
   isClone,
   onOpenWindow,
 }: {
   item: WorkItem;
+  index: number;
   isClone: boolean;
   onOpenWindow: (item: WorkItem, triggerEl: HTMLElement | null) => void;
 }) {
@@ -48,6 +60,7 @@ function BandCard({
   return (
     <li
       className="band-card glass-surface-no-blur"
+      style={{ '--card-index': index } as CSSProperties}
       onClick={handleCardSurfaceClick}
     >
       <div className="band-card-top">
@@ -107,6 +120,7 @@ export default function WorkBand({
   const [showAll, setShowAll] = useState(false);
   const firstSetRef = useRef<HTMLUListElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
+  const viewportRef = useRef<HTMLDivElement | null>(null);
 
   const fallbackDurationSec = Math.max(
     20,
@@ -126,7 +140,10 @@ export default function WorkBand({
       // preventing CSS animation phase jumps or restarts during window resizing.
       if (setWidth > 0 && Math.abs(setWidth - lastAppliedWidth) > 1) {
         lastAppliedWidth = setWidth;
-        const durationSec = setWidth / TARGET_SPEED_PX_PER_SEC;
+        const speed = isLaptopPointer()
+          ? WIDE_SCREEN_SPEED_PX_PER_SEC
+          : TARGET_SPEED_PX_PER_SEC;
+        const durationSec = setWidth / speed;
         trackEl.style.setProperty('--band-duration', `${durationSec.toFixed(2)}s`);
       }
     };
@@ -149,6 +166,90 @@ export default function WorkBand({
       window.removeEventListener('hashchange', checkHash);
     };
   }, [id, items.length]);
+
+  // On laptops the band eases to a stop under the cursor and eases away again,
+  // and the card under the cursor tilts and catches the light.
+  useEffect(() => {
+    const viewportEl = viewportRef.current;
+    const trackEl = trackRef.current;
+    if (!viewportEl || !trackEl) return;
+
+    let rate = 1;
+    let rampRaf: number | null = null;
+    let activeCard: HTMLElement | null = null;
+
+    const rampTo = (target: number) => {
+      if (rampRaf !== null) window.cancelAnimationFrame(rampRaf);
+      const animation = trackEl.getAnimations()[0];
+      if (!animation) return;
+
+      const from = rate;
+      const startedAt = performance.now();
+      const step = (now: number) => {
+        const progress = Math.min(1, (now - startedAt) / SLOW_DOWN_MS);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        rate = from + (target - from) * eased;
+        animation.playbackRate = rate;
+        rampRaf = progress < 1 ? window.requestAnimationFrame(step) : null;
+      };
+      rampRaf = window.requestAnimationFrame(step);
+    };
+
+    const resetCard = () => {
+      if (!activeCard) return;
+      activeCard.style.removeProperty('--tilt-x');
+      activeCard.style.removeProperty('--tilt-y');
+      activeCard = null;
+    };
+
+    const handlePointerEnter = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' && isLaptopPointer()) rampTo(0);
+    };
+
+    const handlePointerLeave = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return;
+      resetCard();
+      rampTo(1);
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse' || !isLaptopPointer()) return;
+
+      const card = (event.target as HTMLElement).closest<HTMLElement>(
+        '.band-card'
+      );
+      if (card !== activeCard) resetCard();
+      if (!card) return;
+      activeCard = card;
+
+      const rect = card.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      card.style.setProperty('--spot-x', `${x}px`);
+      card.style.setProperty('--spot-y', `${y}px`);
+      card.style.setProperty(
+        '--tilt-y',
+        `${((x / rect.width - 0.5) * MAX_TILT_DEG * 2).toFixed(2)}deg`
+      );
+      card.style.setProperty(
+        '--tilt-x',
+        `${((0.5 - y / rect.height) * MAX_TILT_DEG * 2).toFixed(2)}deg`
+      );
+    };
+
+    viewportEl.addEventListener('pointerenter', handlePointerEnter);
+    viewportEl.addEventListener('pointerleave', handlePointerLeave);
+    viewportEl.addEventListener('pointermove', handlePointerMove, {
+      passive: true,
+    });
+
+    return () => {
+      if (rampRaf !== null) window.cancelAnimationFrame(rampRaf);
+      viewportEl.removeEventListener('pointerenter', handlePointerEnter);
+      viewportEl.removeEventListener('pointerleave', handlePointerLeave);
+      viewportEl.removeEventListener('pointermove', handlePointerMove);
+    };
+  }, []);
 
   const handleToggleShowAll = () => {
     setShowAll((prev) => !prev);
@@ -194,6 +295,7 @@ export default function WorkBand({
 
       {/* Full-width floating band outside the page's content container */}
       <div
+        ref={viewportRef}
         className="band-viewport"
         role="group"
         data-reveal
@@ -211,10 +313,11 @@ export default function WorkBand({
         >
           {/* Canonical keyboard-reachable set */}
           <ul ref={firstSetRef} className="band-set">
-            {items.map((item) => (
+            {items.map((item, index) => (
               <BandCard
                 key={item.slug}
                 item={item}
+                index={index}
                 isClone={false}
                 onOpenWindow={onOpenWindow}
               />
@@ -228,8 +331,9 @@ export default function WorkBand({
               className="band-set band-set-clone"
               aria-hidden="true"
             >
-              {items.map((item) => (
+              {items.map((item, index) => (
                 <BandCard
+                  index={index}
                   key={`${item.slug}-clone-${cloneIndex}`}
                   item={item}
                   isClone={true}

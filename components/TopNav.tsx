@@ -203,6 +203,7 @@ export default function TopNav({ staticActiveId }: TopNavProps = {}) {
       // Continuous interpolation across section intervals
       const lastIdx = sectionTops.length - 1;
       let continuousIdx = lastIdx;
+      let pillIdx = lastIdx;
 
       for (let i = 0; i < lastIdx; i++) {
         const startY = sectionTops[i];
@@ -211,6 +212,9 @@ export default function TopNav({ staticActiveId }: TopNavProps = {}) {
           const span = Math.max(1, endY - startY);
           const t = (anchorY - startY) / span;
           continuousIdx = i + Math.max(0, Math.min(1, t));
+          // The pill rests on the current link, then glides over the last stretch
+          const glide = Math.max(0, Math.min(1, (t - 0.6) / 0.4));
+          pillIdx = i + glide * glide * (3 - 2 * glide);
           break;
         }
       }
@@ -225,7 +229,7 @@ export default function TopNav({ staticActiveId }: TopNavProps = {}) {
       }
 
       // With prefers-reduced-motion, snap directly to the active link with no gliding
-      targetProgress = prefersReducedMotion ? nextActive : continuousIdx;
+      targetProgress = prefersReducedMotion ? nextActive : pillIdx;
     };
 
     const tick = () => {

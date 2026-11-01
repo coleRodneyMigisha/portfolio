@@ -2,7 +2,7 @@
 title: "Blender work"
 slug: "blender-work"
 kind: "project"
-summary: "A first 3D project, modelled and rendered in Blender."
+summary: "My first 3D project, modelled and rendered in Blender. Everyone starts somewhere."
 status: "Gallery"
 tags:
   - "Blender"
@@ -16,4 +16,4 @@ order: 12
 visible: true
 ---
 
-A first 3D project, modelled and rendered in Blender.
+My first 3D project, modelled and rendered in Blender. Everyone starts somewhere.

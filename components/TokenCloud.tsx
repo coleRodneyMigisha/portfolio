@@ -24,6 +24,11 @@ const FPS_CAP = 30;
 const FRAME_INTERVAL_MS = 1000 / FPS_CAP;
 const ALPHA_BUCKETS = [0.06, 0.09, 0.13, 0.17, 0.21, 0.25] as const;
 const BUCKET_COUNT = ALPHA_BUCKETS.length;
+const WIDE_SCREEN_PX = 1024;
+const WIDE_ALPHA_BOOST = 1.75;
+const WIDE_DRIFT_BOOST = 1.9;
+const POINTER_RADIUS_PX = 220;
+const POINTER_PUSH_PX = 78;
 
 interface SpriteCell {
   sx: number;
@@ -91,6 +96,18 @@ export default function TokenCloud() {
     let simTimeSec = 0;
     let lastTimestamp = 0;
 
+    // Laptops run at up to 60fps and the cloud parts around the cursor
+    let frameIntervalMs = FRAME_INTERVAL_MS;
+    let pointerTargetX = 0;
+    let pointerTargetY = 0;
+    let pointerX = 0;
+    let pointerY = 0;
+    let pointerStrength = 0;
+    let pointerStrengthTarget = 0;
+    const canFollowPointer =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
     let intersectionObserver: IntersectionObserver | null = null;
     let mutationObserver: MutationObserver | null = null;
     let reducedMotionMedia: MediaQueryList | null = null;
@@ -133,7 +150,7 @@ export default function TokenCloud() {
       currentAccent = readAccentColor();
       heartbeatPeriodSec = readHeartbeatPeriodSec();
       const fontFamily = readFontFamily();
-      const fontSizeCss = width < 768 ? 11 : 12;
+      const fontSizeCss = width < 768 ? 11 : width < WIDE_SCREEN_PX ? 12 : 14;
       const cellPad = 6;
       const cellHeightCss = fontSizeCss + cellPad * 2;
 
@@ -204,7 +221,8 @@ export default function TokenCloud() {
         const angle = rand() * Math.PI * 2;
 
         // Target linear drift speed of 12 to 18 px/s
-        const linearSpeedPx = 12 + rand() * 6;
+        const linearSpeedPx =
+          (12 + rand() * 6) * (width >= WIDE_SCREEN_PX ? WIDE_DRIFT_BOOST : 1);
         const effectiveRadius = Math.max(48, rNorm * avgCloudRadius);
         const direction = rand() > 0.25 ? 1 : -1;
         const orbitSpeed = (linearSpeedPx / effectiveRadius) * 0.45 * direction;
@@ -263,8 +281,16 @@ export default function TokenCloud() {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, width, height);
 
-      const cx = width * 0.5;
-      const cy = height * 0.48;
+      pointerX += (pointerTargetX - pointerX) * 0.14;
+      pointerY += (pointerTargetY - pointerY) * 0.14;
+      pointerStrength += (pointerStrengthTarget - pointerStrength) * 0.08;
+
+      // The whole cloud leans very slightly towards the cursor
+      const leanX = pointerStrength * (pointerX - width * 0.5) * 0.025;
+      const leanY = pointerStrength * (pointerY - height * 0.5) * 0.025;
+
+      const cx = width * 0.5 + leanX;
+      const cy = height * 0.48 + leanY;
 
       // Cloud radii scale gently with viewport while remaining one cohesive cloud
       const rxBase = Math.min(width * 0.45, 620);
@@ -326,8 +352,22 @@ export default function TokenCloud() {
         const driftX = cosWobble * 9;
         const driftY = sinWobble * 9;
 
-        const x = cx + localX * cosTilt - localY * sinTilt + driftX;
-        const y = cy + localX * sinTilt + localY * cosTilt + driftY;
+        let x = cx + localX * cosTilt - localY * sinTilt + driftX;
+        let y = cy + localX * sinTilt + localY * cosTilt + driftY;
+
+        if (pointerStrength > 0.01) {
+          const dx = x - pointerX;
+          const dy = y - pointerY;
+          const distanceSq = dx * dx + dy * dy;
+          if (distanceSq < POINTER_RADIUS_PX * POINTER_RADIUS_PX) {
+            const distance = Math.sqrt(distanceSq) || 1;
+            const falloff = 1 - distance / POINTER_RADIUS_PX;
+            const push =
+              falloff * falloff * POINTER_PUSH_PX * pointerStrength;
+            x += (dx / distance) * push;
+            y += (dy / distance) * push;
+          }
+        }
 
         const cell = spriteCells[p.tokenIndex];
         const bIdx = p.bucketIdx;
@@ -341,7 +381,10 @@ export default function TokenCloud() {
       for (let b = 0; b < BUCKET_COUNT; b++) {
         const count = bucketCounts[b];
         if (count === 0) continue;
-        ctx.globalAlpha = ALPHA_BUCKETS[b];
+        ctx.globalAlpha =
+          width >= WIDE_SCREEN_PX
+            ? ALPHA_BUCKETS[b] * WIDE_ALPHA_BOOST
+            : ALPHA_BUCKETS[b];
         const indices = bucketTokenIndices[b];
         const xs = bucketDrawX[b];
         const ys = bucketDrawY[b];
@@ -383,11 +426,11 @@ export default function TokenCloud() {
       }
 
       const elapsed = timestamp - lastTimestamp;
-      if (elapsed >= FRAME_INTERVAL_MS) {
+      if (elapsed >= frameIntervalMs) {
         // Clamp delta so returning from a paused tab doesn't jump
         const dtSec = Math.min(elapsed, 100) / 1000;
         simTimeSec += dtSec;
-        lastTimestamp = timestamp - (elapsed % FRAME_INTERVAL_MS);
+        lastTimestamp = timestamp - (elapsed % frameIntervalMs);
         renderCloudFrame(simTimeSec);
       }
 
@@ -432,6 +475,8 @@ export default function TokenCloud() {
       width = nextWidth;
       height = nextHeight;
       dpr = nextDpr;
+      frameIntervalMs =
+        width >= WIDE_SCREEN_PX ? 1000 / 60 : FRAME_INTERVAL_MS;
 
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
@@ -453,6 +498,25 @@ export default function TokenCloud() {
         buildSpriteAtlas();
         renderCloudFrame(prefersReducedMotion ? 0 : simTimeSec);
       }
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      pointerTargetX = event.clientX - rect.left;
+      pointerTargetY = event.clientY - rect.top;
+      if (pointerStrengthTarget === 0) {
+        // Start at the cursor so the cloud does not sweep in from a corner
+        pointerX = pointerTargetX;
+        pointerY = pointerTargetY;
+      }
+      pointerStrengthTarget = 1;
+    };
+
+    const handlePointerExit = () => {
+      pointerStrengthTarget = 0;
     };
 
     const handleVisibilityChange = () => {
@@ -531,6 +595,15 @@ export default function TokenCloud() {
         }
 
         window.addEventListener('resize', handleResize, { passive: true });
+        if (canFollowPointer) {
+          window.addEventListener('pointermove', handlePointerMove, {
+            passive: true,
+          });
+          document.documentElement.addEventListener(
+            'mouseleave',
+            handlePointerExit
+          );
+        }
         document.addEventListener('visibilitychange', handleVisibilityChange);
 
         syncLoopState();
@@ -557,6 +630,11 @@ export default function TokenCloud() {
         );
       }
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('pointermove', handlePointerMove);
+      document.documentElement.removeEventListener(
+        'mouseleave',
+        handlePointerExit
+      );
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);

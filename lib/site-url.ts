@@ -1,1 +1,1 @@
-export const SITE_URL = 'https://cole-rodney-migisha.pages.dev';
+export const SITE_URL = 'https://migisha.pages.dev';

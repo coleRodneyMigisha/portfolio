@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
 } from 'react';
 import Link from 'next/link';
 import { File, Github, Linkedin, Mail } from 'lucide-react';
@@ -17,6 +18,7 @@ import WorkBand from '@/components/WorkBand';
 import ScrollReveal from '@/components/ScrollReveal';
 import HeartbeatStatus from '@/components/HeartbeatStatus';
 import HeavenSnippet from '@/components/HeavenSnippet';
+import CopyrightLine from '@/components/CopyrightLine';
 import { SITE_URL } from '@/lib/site-url';
 import type {
   AboutContent,
@@ -72,6 +74,32 @@ function updateCanonicalLink(href: string): void {
   if (canonical) {
     canonical.href = href;
   }
+}
+
+// "How I work." opens its paragraph as a bold lead-in
+function renderAboutParagraph(paragraph: string): ReactNode {
+  const lead = 'How I work.';
+  if (!paragraph.startsWith(lead)) return paragraph;
+  return (
+    <>
+      <strong className="about-lead">{lead}</strong>
+      {paragraph.slice(lead.length)}
+    </>
+  );
+}
+
+// Everything before the first comma is the entry's title
+function renderAboutEntry(entry: string): ReactNode {
+  const commaIndex = entry.indexOf(',');
+  if (commaIndex === -1) {
+    return <strong className="about-entry-title">{entry}</strong>;
+  }
+  return (
+    <>
+      <strong className="about-entry-title">{entry.slice(0, commaIndex)}</strong>
+      {entry.slice(commaIndex)}
+    </>
+  );
 }
 
 function renderFooterLinkIcon(key: string, label: string): ReactNode {
@@ -397,7 +425,7 @@ export default function PortfolioView({
         <header className="site-header">
           <div className="site-shell site-header-inner">
             <Link href="/" className="brand-mark">
-              {site.name}
+              {site.brandName}
             </Link>
             <TopNav />
             <ThemeToggle />
@@ -414,7 +442,16 @@ export default function PortfolioView({
             <TokenCloud />
             <div className="landing-content">
               <h1 id="hero-heading" className="hero-name">
-                {site.name}
+                {site.name.split(' ').map((word, index) => (
+                  <span key={word}>
+                    <span
+                      className="hero-word"
+                      style={{ '--word-index': index } as CSSProperties}
+                    >
+                      {word}
+                    </span>{' '}
+                  </span>
+                ))}
               </h1>
               <p className="hero-tagline">{site.tagline}</p>
             </div>
@@ -437,7 +474,7 @@ export default function PortfolioView({
                 <div className="case-study-prose">
                   {about.aboutParagraphs.map((paragraph, index) => (
                     <p key={index} data-reveal data-reveal-index={index}>
-                      {paragraph}
+                      {renderAboutParagraph(paragraph)}
                     </p>
                   ))}
                 </div>
@@ -450,7 +487,7 @@ export default function PortfolioView({
                     <ul className="clean-list">
                       {about.experience.map((entry, index) => (
                         <li key={entry} data-reveal data-reveal-index={index}>
-                          {entry}
+                          {renderAboutEntry(entry)}
                         </li>
                       ))}
                     </ul>
@@ -463,7 +500,7 @@ export default function PortfolioView({
                     <ul className="clean-list">
                       {about.achievements.map((entry, index) => (
                         <li key={entry} data-reveal data-reveal-index={index}>
-                          {entry}
+                          {renderAboutEntry(entry)}
                         </li>
                       ))}
                     </ul>
@@ -476,7 +513,7 @@ export default function PortfolioView({
                     <ul className="clean-list">
                       {about.education.map((entry, index) => (
                         <li key={entry} data-reveal data-reveal-index={index}>
-                          {entry}
+                          {renderAboutEntry(entry)}
                         </li>
                       ))}
                     </ul>
@@ -562,7 +599,7 @@ export default function PortfolioView({
         <footer className="site-footer" data-reveal>
           <div className="site-shell site-footer-inner">
             <div className="site-footer-top">
-              <p className="footer-brand">{site.name}</p>
+              <p className="footer-brand">{site.brandName}</p>
               <nav aria-label="Profile and contact links">
                 <ul className="inline-link-list">
                   {visibleSiteLinks.map((link) => {
@@ -616,6 +653,8 @@ export default function PortfolioView({
 
               <HeartbeatStatus />
             </div>
+
+            <CopyrightLine name={site.brandName} />
           </div>
         </footer>
       </div>

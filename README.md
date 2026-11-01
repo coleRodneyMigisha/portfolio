@@ -1,76 +1,80 @@
-# Cole Rodney Migisha — Portfolio
+# Cole Rodney Migisha's Portfolio
 
-This is a Next.js (App Router) + TypeScript project configured for static HTML export (`output: 'export'` and `images: { unoptimized: true }`). It contains no server-side runtime code, no API routes, and no API keys.
+Hi! This is the code behind my personal site, live at [migisha.pages.dev](https://migisha.pages.dev).
 
-## Content Structure
+I'm a computer science student at Uganda Christian University, and this site is where my projects and research live. It's also a small project in its own right, because I wanted a portfolio that shows how I build, not just a list of what I've built.
 
-- `content/site.json` — Profile metadata (`name`, `tagline`, `email`, `linkedin`, `github`, `cv`, `leetcode`, `zindi`). Any field left blank (`""`) is automatically hidden in the UI.
-- `content/stack.json` — Technology lists (`confident`, `used`, `learning`).
-- `content/projects/` — Project Markdown entries (`kind: "project"`).
-- `content/research/` — Research Markdown entries (`kind: "research"`).
+## What it does
 
-## Adding new work
+- **Shows my work.** Research and projects drift across the page in two bands. Click a card for a quick look, or open the full story.
+- **Stays alive.** A cloud of characters from my tech stack floats behind my name, and the background drifts slowly behind everything. On a laptop, the cloud moves out of the way of your cursor.
+- **Has a real pulse.** The heartbeat line in the footer comes from an automated pipeline, not a hard-coded value. More on that below.
+- **Works for everyone.** It has dark and light modes, works from phone to desktop, can be used with a keyboard, and goes still for anyone who prefers reduced motion.
 
-You can add a new project or research item simply by creating a Markdown file—no code changes are required:
+## How the heartbeat works
 
-1. **Copy the appropriate template**:
-   - For a project: copy `content/projects/_template.md` to `content/projects/your-slug.md`
-   - For research: copy `content/research/_template.md` to `content/research/your-slug.md`
-   - Note: Any file whose filename starts with `_` (such as `_template.md`) is ignored by the build.
-2. **Fill in all required frontmatter fields**:
-   - `title` (non-empty string)
-   - `slug` (URL-safe lowercase string with hyphens, e.g. `"schema-validation-pipeline"`)
-   - `kind` (`"project"` in `content/projects/`, or `"research"` in `content/research/`)
-   - `summary` (non-empty string)
-   - `status` (non-empty string, e.g. `"Completed"`, `"In Progress"`, `"Working Note"`)
-   - `tags` (YAML list of non-empty strings)
-   - `group` (non-empty string)
-   - `date` (non-empty string, e.g. `"2026-03"`)
-   - `level` (`"full"` or `"short"`):
-     - `"full"` items appear on the home page **and** generate a standalone static route at `/work/[slug]`.
-     - `"short"` items appear on the home page (and open in a compact window) without generating a `/work/[slug]` route.
-   - `team` (`true` or `false` — `true` displays `"Team project"`; never list teammate names)
-   - `image` (string path in `public/`, or `""` if none)
-   - `links` (list of `{ label, url }` objects, or `[]` if none)
-   - `order` (number controlling sort order; lower numbers appear first)
-   - `visible` (`true` to publish, `false` to hide without deleting the file)
-3. **Write the Markdown body** below the second `---`.
-4. **Build and verify**:
-   - Run `npm run build`.
-   - The build validates all frontmatter fields and fails with a message naming the file and field if anything is missing or invalid.
+1. A GitHub Actions workflow (`.github/workflows/heartbeat.yml`) runs every six hours.
+2. It reads my latest public activity from the GitHub API and checks the result.
+3. It saves `heartbeat.json` to a separate `data` branch, so a run never rebuilds the site.
+4. Your browser fetches that file and shows when the pipeline last ran.
 
-## Running Locally Outside AI Studio
+If the data is missing or more than 24 hours old, the line hides itself. No secrets are involved in the browser.
 
-### 1. Install Dependencies
+## How it's built
 
-```bash
-npm install
+| Part | What I used |
+|---|---|
+| Framework | Next.js 15 with TypeScript, exported as a static site |
+| Styling | Plain CSS with variables, in `app/globals.css` |
+| Content | Markdown and JSON files in `content/` |
+| Animation | CSS, plus Canvas 2D for the character cloud |
+| Automation | GitHub Actions |
+| Hosting | Cloudflare Pages, which rebuilds on every push to `main` |
+
+There's no server, database or API key anywhere in this project.
+
+I design the system and make the calls. AI tools wrote first drafts of much of the code, then I reviewed it, changed it and tested it.
+
+## Where things live
+
+```text
+app/            Pages, metadata and all the styles
+components/     The cloud, bands, footer and other pieces
+content/        Everything you read on the site
+lib/            Loads and checks the content
+public/         Images, CV and icons
+.github/        The heartbeat workflow
 ```
 
-### 2. Run the Development Server
+## Running it yourself
 
-```bash
+You'll need Node.js 20 or newer.
+
+```sh
+npm ci
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Then open <http://localhost:3000>. To make the production build, which ends up in `out/`, run:
 
-### 3. Build Static Files (`out/` directory)
-
-```bash
+```sh
 npm run build
 ```
 
-Running `npm run build` executes `next build`, validating all content in `content/` and exporting static HTML/CSS/JS into the `out/` folder.
+This project uses npm only, so please don't add a `bun.lock` file. Cloudflare will try to use it and the build will fail.
 
-### 4. Preview the Static `out/` Directory Locally
+## Adding new work
 
-```bash
-npx serve@latest out
-```
+No code needed:
 
-Or using Python:
+1. Copy `content/projects/_template.md` or `content/research/_template.md` to a new file. Files starting with `_` are ignored.
+2. Fill in the details at the top and write the story below them.
+3. Push to `main`.
 
-```bash
-python3 -m http.server 3000 --directory out
-```
+The card, window and page build themselves. `level: "full"` gives an item its own page at `/work/your-slug`, and `level: "short"` keeps it in a window. The build checks every field and tells you which file to fix if something is missing.
+
+To change the site's profile details, edit `content/site.json`. Leave a field empty to hide it. Tools live in `content/stack.json`. The words typed out in the footer live in `content/heaven-words.json`.
+
+## License and reuse
+
+There's no open source license yet, so the code, writing and designs here are all rights reserved. You're welcome to read it and learn from it, and please ask before reusing anything.

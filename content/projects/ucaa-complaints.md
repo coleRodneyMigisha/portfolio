@@ -2,7 +2,7 @@
 title: "UCAA complaints system"
 slug: "ucaa-complaints"
 kind: "project"
-summary: "During my internship at the Uganda Civil Aviation Authority, I built a web-based system for handling passenger complaints, connecting passengers, service providers and Authority staff in one workflow."
+summary: "During my internship at the Uganda Civil Aviation Authority, I built a web-based system for handling passenger complaints, getting passengers, service providers and Authority staff into one workflow."
 status: "Internship project"
 tags:
   - "Web development"
@@ -16,4 +16,4 @@ order: 5
 visible: true
 ---
 
-During my internship at the Uganda Civil Aviation Authority, I built a web-based system for handling passenger complaints, connecting passengers, service providers and Authority staff in one workflow.
+During my internship at the Uganda Civil Aviation Authority, I built a web-based system for handling passenger complaints, getting passengers, service providers and Authority staff into one workflow.

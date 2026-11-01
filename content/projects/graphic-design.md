@@ -2,7 +2,7 @@
 title: "Graphic design"
 slug: "graphic-design"
 kind: "project"
-summary: "Posters designed for the Honours College at Uganda Christian University."
+summary: "Posters I designed for the Honours College at Uganda Christian University. Less Python, more Inkscape."
 status: "Gallery"
 tags:
   - "Inkscape"
@@ -16,7 +16,7 @@ order: 11
 visible: true
 ---
 
-A selection of posters I designed for the Honours College at Uganda Christian University.
+A selection of posters I designed for the Honours College at Uganda Christian University. Yes, I do the visuals too.
 
 ![General election poster](/images/design-election.jpg)
 

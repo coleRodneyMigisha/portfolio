@@ -2,7 +2,7 @@
 title: "NetDoctor"
 slug: "netdoctor"
 kind: "project"
-summary: "A network diagnostics platform built by a small team at the Africa's Talking hackathon, designed to help customers and internet providers find where a connection has failed."
+summary: "A network diagnostics platform, built by a small team at the Africa's Talking hackathon, that helps customers and internet providers find exactly where a connection failed."
 status: "Hackathon prototype"
 tags:
   - "Testing"
@@ -17,4 +17,4 @@ order: 7
 visible: true
 ---
 
-A network diagnostics platform built by a small team at the Africa's Talking hackathon, designed to help customers and internet providers find where a connection has failed. I worked on testing, bug fixing and quality.
+A network diagnostics platform, built by a small team at the Africa's Talking hackathon, that helps customers and internet providers find exactly where a connection failed. I handled testing, bug fixing and keeping the quality up.

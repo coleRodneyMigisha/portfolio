@@ -2,7 +2,7 @@
 title: "Portfolio heartbeat"
 slug: "portfolio-heartbeat"
 kind: "project"
-summary: "A small automation pipeline that keeps this site's heartbeat line up to date."
+summary: "A small automation pipeline that gives this site an actual pulse."
 status: "Running"
 tags:
   - "Python"
@@ -20,6 +20,6 @@ order: 4.5
 visible: true
 ---
 
-A scheduled GitHub Actions workflow runs every six hours. It reads my latest public activity from the GitHub API, checks the result, and saves it to a separate data branch, so a run never rebuilds the site.
+Every six hours, a scheduled GitHub Actions workflow reads my latest public activity from the GitHub API, checks the result and saves it to a separate data branch, so a run never rebuilds the site.
 
-The page reads that file in the browser, with no secrets. If the data is missing or old, the line simply disappears.
+The page reads that file right in your browser, with no secrets involved. If the data goes missing or gets old, the line quietly disappears instead of complaining.

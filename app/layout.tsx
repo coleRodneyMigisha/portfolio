@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Instrument_Serif, JetBrains_Mono } from 'next/font/google';
 import { SITE_URL, getSiteConfig } from '@/lib/content';
+import AmbientBackground from '@/components/AmbientBackground';
 import './globals.css';
 
 const instrumentSerif = Instrument_Serif({
@@ -13,7 +14,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 const jetbrainsMono = JetBrains_Mono({
-  weight: ['400', '600'],
+  weight: ['400', '600', '700'],
   subsets: ['latin'],
   display: 'swap',
   preload: true,
@@ -118,7 +119,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }}
         />
       </head>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <AmbientBackground />
+        {children}
+      </body>
     </html>
   );
 }

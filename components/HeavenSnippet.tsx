@@ -1,28 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import heavenWords from '@/content/heaven-words.json';
 
-const HEAVEN_COMPLETIONS = [
-  'praise',
-  'peace',
-  'paradise',
-  'perfect',
-  'prayer',
-] as const;
+const HEAVEN_WORDS: readonly string[] = heavenWords;
+
+function shuffle(words: readonly string[]): string[] {
+  const shuffled = [...words];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 export default function HeavenSnippet() {
   const [heavenTypedText, setHeavenTypedText] = useState<string>(
-    HEAVEN_COMPLETIONS[0]
+    HEAVEN_WORDS[0]
   );
 
   useEffect(() => {
-    const shuffledWords = [...HEAVEN_COMPLETIONS];
-    for (let i = shuffledWords.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const temp = shuffledWords[i];
-      shuffledWords[i] = shuffledWords[j];
-      shuffledWords[j] = temp;
-    }
+    let shuffledWords = shuffle(HEAVEN_WORDS);
 
     const reducedMotionMq = window.matchMedia(
       '(prefers-reduced-motion: reduce)'
@@ -69,7 +67,12 @@ export default function HeavenSnippet() {
 
           if (charIndex <= 0) {
             isDeleting = false;
-            wordIndex = (wordIndex + 1) % shuffledWords.length;
+            wordIndex += 1;
+            if (wordIndex >= shuffledWords.length) {
+              // Every word has had a turn, so deal a fresh order
+              shuffledWords = shuffle(HEAVEN_WORDS);
+              wordIndex = 0;
+            }
             timerId = window.setTimeout(step, 800);
           } else {
             timerId = window.setTimeout(step, 150);
@@ -92,7 +95,7 @@ export default function HeavenSnippet() {
 
   return (
     <div className="footer-code-detail">
-      <span className="sr-only">from Heaven import P</span>
+      <span className="sr-only">from Heaven import grace</span>
       <code className="heaven-snippet-code" aria-hidden="true">
         <span className="heaven-kw">from</span> Heaven{' '}
         <span className="heaven-kw">import</span>{' '}

@@ -2,7 +2,7 @@
 title: "Systematic literature review"
 slug: "systematic-review"
 kind: "research"
-summary: "A PRISMA-guided review of computer vision for detecting suspicious activity in surveillance video."
+summary: "A PRISMA-guided review of how computer vision detects suspicious activity in surveillance video. Yes, I read all the papers."
 status: "Manuscript in preparation"
 tags:
   - "PRISMA"
@@ -18,4 +18,4 @@ order: 3
 visible: true
 ---
 
-A PRISMA-guided review of computer vision for detecting suspicious activity in surveillance video.
+A PRISMA-guided review of how computer vision detects suspicious activity in surveillance video. Yes, I read all the papers.

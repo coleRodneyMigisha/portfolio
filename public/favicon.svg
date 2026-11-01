@@ -9,10 +9,13 @@
     }
     @media (prefers-color-scheme: light) {
       .crm-text {
-        fill: #151D19;
+        fill: #12291F;
+      }
+      .crm-bar {
+        fill: #1A5240;
       }
     }
   </style>
   <text x="3" y="42" class="crm-text">crm</text>
-  <rect x="53" y="21" width="5" height="24" rx="1" fill="#C79A5B" />
+  <rect x="53" y="21" width="5" height="24" rx="1" class="crm-bar" fill="#C79A5B" />
 </svg>

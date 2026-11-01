@@ -2,7 +2,7 @@
 title: "AirQo PM2.5 pipeline"
 slug: "airqo-pipeline"
 kind: "project"
-summary: "On a team of two, I worked on predicting hourly air pollution in Ugandan cities from low-cost sensor data, then served the model through a live dashboard."
+summary: "On a team of two, I worked on predicting hourly air pollution in Ugandan cities from low-cost sensor data, then the model went live behind a dashboard."
 status: "Live"
 tags:
   - "Python"
@@ -21,11 +21,11 @@ visible: true
 
 ## Why
 
-Low-cost sensors have widened air quality monitoring in Ugandan cities, but devices go offline and leave gaps in the data.
+Low-cost sensors have brought air quality monitoring to more of Uganda's cities, but devices go offline and leave holes in the data.
 
 ## My part
 
-We planned and built it together. I worked on filling gaps in the sensor data and on drift monitoring.
+We planned and built it together. My corners were filling the gaps in the sensor data and keeping an eye on drift.
 
 ## Where it stands
 

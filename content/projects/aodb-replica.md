@@ -2,7 +2,7 @@
 title: "AODB replica"
 slug: "aodb-replica"
 kind: "project"
-summary: "During the same internship, I built a simple Java desktop replica of an airport operational database, for practising how flight records are amended."
+summary: "Same internship, different challenge: a simple Java desktop replica of an airport operational database, for practising how flight records are amended."
 status: "Internship project"
 tags:
   - "Java"
@@ -16,4 +16,4 @@ order: 6
 visible: true
 ---
 
-During the same internship, I built a simple Java desktop replica of an airport operational database, for practising how flight records are amended.
+Same internship, different challenge: a simple Java desktop replica of an airport operational database, for practising how flight records are amended.
