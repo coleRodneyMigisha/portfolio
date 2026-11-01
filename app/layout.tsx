@@ -1,18 +1,21 @@
 import type {Metadata} from 'next';
+import {getSiteConfig} from '@/lib/content';
 import './globals.css';
 
+const site = getSiteConfig();
+
 export const metadata: Metadata = {
-  title: 'Next.js Static Export Starter',
-  description: 'Minimal Next.js TypeScript project configured for static export.',
+  title: site.name,
+  description: site.tagline,
   openGraph: {
-    title: 'Next.js Static Export Starter',
-    description: 'Minimal Next.js TypeScript project configured for static export.',
+    title: site.name,
+    description: site.tagline,
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Next.js Static Export Starter',
-    description: 'Minimal Next.js TypeScript project configured for static export.',
+    title: site.name,
+    description: site.tagline,
   },
 };
 

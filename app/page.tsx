@@ -11,9 +11,15 @@ function PlainWorkItem({ item }: { item: WorkItem }) {
   return (
     <li>
       <p>
-        <strong>{item.title}</strong> ({item.kind} | status: {item.status} | group:{' '}
-        {item.group} | date: {item.date} | level: {item.level}
-        {item.team ? ' | Team project' : ''})
+        <strong>
+          {item.level === 'full' ? (
+            <Link href={`/work/${item.slug}`}>{item.title}</Link>
+          ) : (
+            item.title
+          )}
+        </strong>{' '}
+        ({item.status} · {item.group} · {item.date}
+        {item.team ? ' · Team project' : ''})
       </p>
       <p>{item.summary}</p>
       <p>Tags: {item.tags.join(', ')}</p>
@@ -29,13 +35,6 @@ function PlainWorkItem({ item }: { item: WorkItem }) {
             </span>
           ))}
         </p>
-      )}
-      {item.level === 'full' ? (
-        <p>
-          <Link href={`/work/${item.slug}`}>Open full page (/work/{item.slug})</Link>
-        </p>
-      ) : (
-        <p>Short item (opens in window only; no standalone /work/[slug] route)</p>
       )}
     </li>
   );
@@ -67,7 +66,7 @@ export default function HomePage() {
       <section>
         <h2>Research</h2>
         {researchItems.length === 0 ? (
-          <p>No visible research items.</p>
+          <p>No research items.</p>
         ) : (
           <ul>
             {researchItems.map((item) => (
@@ -80,7 +79,7 @@ export default function HomePage() {
       <section>
         <h2>Projects</h2>
         {projectItems.length === 0 ? (
-          <p>No visible project items.</p>
+          <p>No project items.</p>
         ) : (
           <ul>
             {projectItems.map((item) => (

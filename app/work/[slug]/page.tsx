@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import Markdown from 'react-markdown';
 import { getFullWorkItems, getFullWorkItemBySlug } from '@/lib/content';
 
 export const dynamicParams = false;
@@ -26,15 +27,14 @@ export default async function WorkItemPage({
   return (
     <main>
       <p>
-        <Link href="/">Back to Home (/)</Link>
+        <Link href="/">Back to Home</Link>
       </p>
       <h1>{item.title}</h1>
       <p>
-        Kind: {item.kind} | Status: {item.status} | Group: {item.group} | Date:{' '}
-        {item.date}
-        {item.team ? ' | Team project' : ''}
+        {item.status} · {item.group} · {item.date}
+        {item.team ? ' · Team project' : ''}
       </p>
-      <p>Summary: {item.summary}</p>
+      <p>{item.summary}</p>
       <p>Tags: {item.tags.join(', ')}</p>
       {item.links.length > 0 && (
         <ul>
@@ -48,7 +48,9 @@ export default async function WorkItemPage({
         </ul>
       )}
       <hr />
-      <pre>{item.body}</pre>
+      <article>
+        <Markdown>{item.body}</Markdown>
+      </article>
     </main>
   );
 }
