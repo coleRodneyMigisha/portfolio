@@ -1,0 +1,136 @@
+name: Heartbeat Data Pipeline
+
+on:
+  schedule:
+    # Runs 4 times a day at 00:00, 06:00, 12:00, and 18:00 UTC
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: heartbeat-data-branch
+  cancel-in-progress: false
+
+jobs:
+  update-heartbeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_USERNAME: coleRodneyMigisha
+      DATA_BRANCH: data
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Fetch latest public GitHub activity and build heartbeat.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - << 'EOF'
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timezone
+
+          username = os.environ.get("GH_USERNAME", "coleRodneyMigisha")
+          token = os.environ.get("GITHUB_TOKEN", "")
+
+          headers = {
+              "Accept": "application/vnd.github+json",
+              "User-Agent": f"{username}-heartbeat-pipeline",
+              "X-GitHub-Api-Version": "2022-11-28",
+          }
+          if token:
+              headers["Authorization"] = f"Bearer {token}"
+
+          def fetch_json(url: str):
+              req = urllib.request.Request(url, headers=headers)
+              with urllib.request.urlopen(req, timeout=15) as response:
+                  return json.loads(response.read().decode("utf-8"))
+
+          latest_repo = ""
+          latest_event = ""
+          run_status = "ok"
+
+          try:
+              events_url = f"https://api.github.com/users/{username}/events/public?per_page=10"
+              events = fetch_json(events_url)
+
+              if isinstance(events, list) and len(events) > 0:
+                  first = events[0]
+                  raw_repo = (first.get("repo") or {}).get("name", "")
+                  latest_repo = raw_repo.split("/")[-1] if raw_repo else username
+                  latest_event = first.get("type") or "PublicActivity"
+              else:
+                  # Fallback if no public events within GitHub's 90-day event window
+                  repos_url = f"https://api.github.com/users/{username}/repos?sort=pushed&per_page=1"
+                  repos = fetch_json(repos_url)
+                  if isinstance(repos, list) and len(repos) > 0:
+                      latest_repo = repos[0].get("name") or username
+                      latest_event = "RepositoryUpdate"
+                  else:
+                      latest_repo = username
+                      latest_event = "Idle"
+          except Exception as exc:
+              print(f"GitHub API fetch failed: {exc}", file=sys.stderr)
+              sys.exit(1)
+
+          now_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+          payload = {
+              "updated_at": now_utc,
+              "latest_repo": str(latest_repo).strip(),
+              "latest_event": str(latest_event).strip(),
+              "run_status": run_status,
+          }
+
+          required_keys = ("updated_at", "latest_repo", "latest_event", "run_status")
+          for key in required_keys:
+              if not isinstance(payload.get(key), str) or not payload[key]:
+                  print(f"Validation failed for field: {key}", file=sys.stderr)
+                  sys.exit(1)
+
+          with open("/tmp/heartbeat.json", "w", encoding="utf-8") as f:
+              json.dump(payload, f, indent=2)
+              f.write("\n")
+
+          print("Generated heartbeat.json:", json.dumps(payload))
+          EOF
+
+      - name: Commit heartbeat.json to dedicated data branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git ls-remote --exit-code --heads origin "${DATA_BRANCH}" >/dev/null 2>&1; then
+            git fetch origin "${DATA_BRANCH}" --depth=1
+            git checkout -B "${DATA_BRANCH}" "origin/${DATA_BRANCH}"
+          else
+            git checkout --orphan "${DATA_BRANCH}"
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          # Keep only heartbeat.json on the data branch so no site code is duplicated
+          find . -maxdepth 1 \
+            ! -name '.' \
+            ! -name '..' \
+            ! -name '.git' \
+            ! -name 'heartbeat.json' \
+            -exec rm -rf {} +
+
+          cp /tmp/heartbeat.json ./heartbeat.json
+          git add heartbeat.json
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore(heartbeat): update heartbeat.json [skip ci]"
+            git push origin "${DATA_BRANCH}"
+          fi

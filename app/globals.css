@@ -1168,6 +1168,62 @@ section[id] {
   }
 }
 
+.footer-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tight-space) var(--item-space);
+}
+
+.heartbeat-line {
+  margin: 0;
+  font-family: var(--font-mono-stack);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.heartbeat-status-link {
+  color: var(--muted);
+  text-decoration: underline;
+  text-decoration-color: var(--edge);
+  text-underline-offset: 0.25em;
+  transition:
+    color 160ms ease,
+    text-decoration-color 160ms ease;
+}
+
+.heartbeat-status-link:hover,
+.heartbeat-status-link:focus-visible {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
+
+.heartbeat-section {
+  padding-top: var(--item-space);
+  border-top: 1px solid var(--edge);
+  scroll-margin-top: var(--header-scroll-offset);
+}
+
+.heartbeat-section-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--text);
+  margin: 0 0 0.5rem 0;
+}
+
+.heartbeat-section-body {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.heartbeat-section-body code {
+  font-family: var(--font-mono-stack);
+  color: var(--text);
+}
+
 .mb-tight {
   margin-bottom: var(--tight-space);
 }

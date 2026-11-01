@@ -8,6 +8,7 @@ import TopNav from '@/components/TopNav';
 import TokenCloud from '@/components/TokenCloud';
 import WorkBand from '@/components/WorkBand';
 import ScrollReveal from '@/components/ScrollReveal';
+import HeartbeatStatus from '@/components/HeartbeatStatus';
 import type {
   AboutContent,
   SiteConfig,
@@ -496,33 +497,60 @@ export default function PortfolioView({
               </ul>
             </div>
 
-            <div className="footer-code-detail">
-              <div
-                className="heaven-snippet-trigger"
-                tabIndex={0}
-                aria-label="Python import note: from Heaven import P, with autocomplete suggestions"
-                aria-describedby="heaven-autocomplete-list"
-              >
-                <code className="heaven-snippet-code">
-                  <span className="heaven-kw">from</span> Heaven{' '}
-                  <span className="heaven-kw">import</span>{' '}
-                  <span className="heaven-prefix">P</span>
-                </code>
-
-                <ul
-                  id="heaven-autocomplete-list"
-                  className="heaven-autocomplete"
-                  aria-label="Autocomplete suggestions"
+            <div className="footer-meta-row">
+              <div className="footer-code-detail">
+                <div
+                  className="heaven-snippet-trigger"
+                  tabIndex={0}
+                  aria-label="Python import note: from Heaven import P, with autocomplete suggestions"
+                  aria-describedby="heaven-autocomplete-list"
                 >
-                  {heavenCompletions.map((word) => (
-                    <li key={word} className="heaven-autocomplete-item">
-                      <span className="heaven-match">{word.slice(0, 1)}</span>
-                      <span>{word.slice(1)}</span>
-                    </li>
-                  ))}
-                </ul>
+                  <code className="heaven-snippet-code">
+                    <span className="heaven-kw">from</span> Heaven{' '}
+                    <span className="heaven-kw">import</span>{' '}
+                    <span className="heaven-prefix">P</span>
+                  </code>
+
+                  <ul
+                    id="heaven-autocomplete-list"
+                    className="heaven-autocomplete"
+                    aria-label="Autocomplete suggestions"
+                  >
+                    {heavenCompletions.map((word) => (
+                      <li key={word} className="heaven-autocomplete-item">
+                        <span className="heaven-match">{word.slice(0, 1)}</span>
+                        <span>{word.slice(1)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
+
+              <HeartbeatStatus />
             </div>
+
+            <section
+              id="heartbeat"
+              className="heartbeat-section case-study-prose"
+              aria-labelledby="heartbeat-heading"
+            >
+              <h2 id="heartbeat-heading" className="heartbeat-section-title">
+                Heartbeat pipeline
+              </h2>
+              <p className="heartbeat-section-body">
+                A scheduled GitHub Actions workflow runs every six hours (and on
+                manual dispatch) using the built-in <code>GITHUB_TOKEN</code> to
+                query the public GitHub API for my latest activity on{' '}
+                <code>coleRodneyMigisha</code>. It writes{' '}
+                <code>heartbeat.json</code> (<code>updated_at</code>,{' '}
+                <code>latest_repo</code>, <code>latest_event</code> and{' '}
+                <code>run_status</code>) and commits it to an isolated{' '}
+                <code>data</code> branch so that scheduled runs never trigger a
+                site rebuild. At runtime, the browser fetches the raw file from
+                that branch without secrets, caches the last good run locally,
+                and hides the status line if the data is unreachable or old.
+              </p>
+            </section>
           </div>
         </footer>
       </div>
