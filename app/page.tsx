@@ -1,41 +1,62 @@
 import Link from 'next/link';
+import ThemeToggle from '@/components/ThemeToggle';
 import {
   getSiteConfig,
   getVisibleSiteLinks,
   getStackConfig,
+  getAboutContent,
   getVisibleItemsByKind,
   type WorkItem,
 } from '@/lib/content';
 
-function PlainWorkItem({ item }: { item: WorkItem }) {
+function WorkCard({ item }: { item: WorkItem }) {
   return (
-    <li>
-      <p>
-        <strong>
+    <li className="work-card">
+      <div>
+        <h3 className="work-card-title">
           {item.level === 'full' ? (
             <Link href={`/work/${item.slug}`}>{item.title}</Link>
           ) : (
             item.title
           )}
-        </strong>{' '}
-        ({item.status} · {item.group} · {item.date}
-        {item.team ? ' · Team project' : ''})
-      </p>
-      <p>{item.summary}</p>
-      <p>Tags: {item.tags.join(', ')}</p>
-      {item.links.length > 0 && (
-        <p>
-          Links:{' '}
-          {item.links.map((link, idx) => (
-            <span key={link.url}>
-              {idx > 0 ? ', ' : ''}
-              <a href={link.url} target="_blank" rel="noopener noreferrer">
+        </h3>
+        <p className="work-meta">
+          <span>{item.status}</span>
+          <span aria-hidden="true"> · </span>
+          <span>{item.group}</span>
+          <span aria-hidden="true"> · </span>
+          <span>{item.date}</span>
+          {item.team && (
+            <>
+              <span aria-hidden="true"> · </span>
+              <span>Team project</span>
+            </>
+          )}
+        </p>
+      </div>
+
+      <p className="work-summary">{item.summary}</p>
+
+      <div>
+        <p className="work-tags">{item.tags.join(' · ')}</p>
+        {(item.level === 'full' || item.links.length > 0) && (
+          <div className="work-card-footer">
+            {item.level === 'full' && (
+              <Link href={`/work/${item.slug}`}>Read case study</Link>
+            )}
+            {item.links.map((link) => (
+              <a
+                key={link.url}
+                href={link.url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {link.label}
               </a>
-            </span>
-          ))}
-        </p>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </li>
   );
 }
@@ -43,64 +64,193 @@ function PlainWorkItem({ item }: { item: WorkItem }) {
 export default function HomePage() {
   const site = getSiteConfig();
   const visibleSiteLinks = getVisibleSiteLinks(site);
-  const stack = getStackConfig();
+  const about = getAboutContent();
   const researchItems = getVisibleItemsByKind('research');
   const projectItems = getVisibleItemsByKind('project');
+  const stack = getStackConfig();
+
+  const cvHref = site.cv.trim();
 
   return (
-    <main>
-      <header>
-        <h1>{site.name}</h1>
-        <p>{site.tagline}</p>
-        {visibleSiteLinks.length > 0 && (
-          <ul>
-            {visibleSiteLinks.map((link) => (
-              <li key={link.key}>
-                <a href={link.href}>{link.label}</a>
-              </li>
-            ))}
-          </ul>
-        )}
+    <>
+      <header className="site-header">
+        <div className="site-shell site-header-inner">
+          <Link href="/" className="brand-mark">
+            {site.name}
+          </Link>
+          <nav className="site-nav" aria-label="Primary navigation">
+            <a href="#about">About Me</a>
+            <a href="#research">Research</a>
+            <a href="#projects">Projects</a>
+            <a href="#stack">Technology</a>
+          </nav>
+          <ThemeToggle />
+        </div>
       </header>
 
-      <section>
-        <h2>Research</h2>
-        {researchItems.length === 0 ? (
-          <p>No research items.</p>
-        ) : (
-          <ul>
+      <main className="site-shell">
+        {/* 1. Landing */}
+        <section id="landing" className="page-section" aria-labelledby="hero-heading">
+          <h1 id="hero-heading" className="hero-name">
+            {site.name}
+          </h1>
+          <p className="hero-tagline">{site.tagline}</p>
+          {visibleSiteLinks.length > 0 && (
+            <ul className="inline-link-list" aria-label="Profile links">
+              {visibleSiteLinks.map((link) => (
+                <li key={link.key}>
+                  <a
+                    href={link.href}
+                    target={link.key === 'email' ? undefined : '_blank'}
+                    rel={link.key === 'email' ? undefined : 'noopener noreferrer'}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* 2. About Me */}
+        <section id="about" className="page-section" aria-labelledby="about-heading">
+          <div className="section-header">
+            <h2 id="about-heading" className="section-title">
+              About Me
+            </h2>
+          </div>
+
+          <div className="about-grid">
+            <div className="case-study-prose">
+              {about.aboutParagraphs.map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+            </div>
+
+            <div>
+              <div className="about-subsection">
+                <h3 className="about-subsection-title">Experience</h3>
+                <ul className="clean-list">
+                  {about.experience.map((entry) => (
+                    <li key={entry}>{entry}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="about-subsection">
+                <h3 className="about-subsection-title">Achievements</h3>
+                <ul className="clean-list">
+                  {about.achievements.map((entry) => (
+                    <li key={entry}>{entry}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="about-subsection">
+                <h3 className="about-subsection-title">Education</h3>
+                <ul className="clean-list">
+                  {about.education.map((entry) => (
+                    <li key={entry}>{entry}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 3. Research */}
+        <section
+          id="research"
+          className="page-section"
+          aria-labelledby="research-heading"
+        >
+          <div className="section-header">
+            <h2 id="research-heading" className="section-title">
+              Research
+            </h2>
+          </div>
+
+          <ul className="work-list">
             {researchItems.map((item) => (
-              <PlainWorkItem key={item.slug} item={item} />
+              <WorkCard key={item.slug} item={item} />
             ))}
           </ul>
-        )}
-      </section>
+        </section>
 
-      <section>
-        <h2>Projects</h2>
-        {projectItems.length === 0 ? (
-          <p>No project items.</p>
-        ) : (
-          <ul>
+        {/* 4. Projects */}
+        <section
+          id="projects"
+          className="page-section"
+          aria-labelledby="projects-heading"
+        >
+          <div className="section-header">
+            <h2 id="projects-heading" className="section-title">
+              Projects
+            </h2>
+          </div>
+
+          <ul className="work-list">
             {projectItems.map((item) => (
-              <PlainWorkItem key={item.slug} item={item} />
+              <WorkCard key={item.slug} item={item} />
             ))}
           </ul>
-        )}
-      </section>
+        </section>
 
-      <section>
-        <h2>Technology Stack</h2>
-        <p>
-          <strong>Confident:</strong> {stack.confident.join(', ')}
-        </p>
-        <p>
-          <strong>Used:</strong> {stack.used.join(', ')}
-        </p>
-        <p>
-          <strong>Learning:</strong> {stack.learning.join(', ')}
-        </p>
-      </section>
-    </main>
+        {/* 5. Technology list */}
+        <section id="stack" className="page-section" aria-labelledby="stack-heading">
+          <div className="section-header">
+            <h2 id="stack-heading" className="section-title">
+              Technology
+            </h2>
+          </div>
+
+          <div className="stack-groups">
+            <div className="stack-group">
+              <h3 className="stack-group-title">Confident</h3>
+              <p className="stack-items">{stack.confident.join(' · ')}</p>
+            </div>
+
+            <div className="stack-group">
+              <h3 className="stack-group-title">Used</h3>
+              <p className="stack-items">{stack.used.join(' · ')}</p>
+            </div>
+
+            <div className="stack-group">
+              <h3 className="stack-group-title">Learning</h3>
+              <p className="stack-items">{stack.learning.join(' · ')}</p>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* 6. Footer */}
+      <footer className="site-footer">
+        <div className="site-shell site-footer-inner">
+          <p className="footer-brand">{site.name}</p>
+          <ul className="inline-link-list" aria-label="Footer links">
+            {cvHref.length > 0 && (
+              <li>
+                <a href={cvHref} target="_blank" rel="noopener noreferrer">
+                  CV (PDF)
+                </a>
+              </li>
+            )}
+            {visibleSiteLinks
+              .filter((link) => link.key !== 'cv')
+              .map((link) => (
+                <li key={link.key}>
+                  <a
+                    href={link.href}
+                    target={link.key === 'email' ? undefined : '_blank'}
+                    rel={link.key === 'email' ? undefined : 'noopener noreferrer'}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+          </ul>
+        </div>
+      </footer>
+    </>
   );
 }

@@ -363,6 +363,13 @@ export function getVisibleSiteLinks(site: SiteConfig): Array<{ key: string; labe
     });
 }
 
+export interface AboutContent {
+  aboutParagraphs: string[];
+  experience: string[];
+  achievements: string[];
+  education: string[];
+}
+
 export function getStackConfig(): StackConfig {
   const relativeFilePath = 'content/stack.json';
   const fullPath = path.join(CONTENT_ROOT, 'stack.json');
@@ -378,3 +385,71 @@ export function getStackConfig(): StackConfig {
     learning: assertStringArray(raw.learning, relativeFilePath, 'learning'),
   };
 }
+
+export function getAboutContent(): AboutContent {
+  const relativeFilePath = 'content/about.md';
+  const fullPath = path.join(CONTENT_ROOT, 'about.md');
+  if (!fs.existsSync(fullPath)) {
+    throw new Error(`[Content Error] Missing required file "${relativeFilePath}".`);
+  }
+
+  const raw = fs.readFileSync(fullPath, 'utf8');
+  const lines = raw.split(/\r?\n/);
+
+  type SectionKey = 'about' | 'experience' | 'achievements' | 'education';
+  let currentSection: SectionKey = 'about';
+
+  const aboutLines: string[] = [];
+  const experience: string[] = [];
+  const achievements: string[] = [];
+  const education: string[] = [];
+
+  for (const rawLine of lines) {
+    const trimmed = rawLine.trim();
+    const headingCandidate = trimmed.replace(/^#+\s*/, '');
+
+    if (headingCandidate === 'About Me') {
+      currentSection = 'about';
+      continue;
+    }
+    if (headingCandidate === 'Experience') {
+      currentSection = 'experience';
+      continue;
+    }
+    if (headingCandidate === 'Achievements') {
+      currentSection = 'achievements';
+      continue;
+    }
+    if (headingCandidate === 'Education') {
+      currentSection = 'education';
+      continue;
+    }
+
+    if (currentSection === 'about') {
+      aboutLines.push(trimmed);
+    } else if (trimmed.length > 0) {
+      const cleanedItem = trimmed.replace(/^[-*]\s+/, '');
+      if (currentSection === 'experience') {
+        experience.push(cleanedItem);
+      } else if (currentSection === 'achievements') {
+        achievements.push(cleanedItem);
+      } else if (currentSection === 'education') {
+        education.push(cleanedItem);
+      }
+    }
+  }
+
+  const aboutParagraphs = aboutLines
+    .join('\n')
+    .split(/\n{2,}/)
+    .map((p) => p.replace(/\n+/g, ' ').trim())
+    .filter((p) => p.length > 0);
+
+  return {
+    aboutParagraphs,
+    experience,
+    achievements,
+    education,
+  };
+}
+
