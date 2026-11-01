@@ -54,6 +54,14 @@ function parseWorkSlugFromPathname(pathname: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+const HEAVEN_COMPLETIONS = [
+  'praise',
+  'peace',
+  'paradise',
+  'perfect',
+  'prayer',
+] as const;
+
 export default function PortfolioView({
   site,
   visibleSiteLinks,
@@ -269,7 +277,92 @@ export default function PortfolioView({
     [stack.confident, stack.learning, stack.used]
   );
 
-  const heavenCompletions = ['praise', 'peace', 'paradise', 'perfect', 'prayer'];
+  const [heavenRandomWord, setHeavenRandomWord] = useState<string>(
+    HEAVEN_COMPLETIONS[0]
+  );
+  const [heavenTypedText, setHeavenTypedText] = useState<string>(
+    HEAVEN_COMPLETIONS[0]
+  );
+
+  useEffect(() => {
+    const shuffledWords = [...HEAVEN_COMPLETIONS];
+    for (let i = shuffledWords.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = shuffledWords[i];
+      shuffledWords[i] = shuffledWords[j];
+      shuffledWords[j] = temp;
+    }
+
+    setHeavenRandomWord(shuffledWords[0]);
+
+    const reducedMotionMq = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    );
+
+    let timerId: number | null = null;
+
+    const clearTypingTimer = () => {
+      if (timerId !== null) {
+        window.clearTimeout(timerId);
+        timerId = null;
+      }
+    };
+
+    const syncHeavenAnimation = () => {
+      clearTypingTimer();
+
+      if (reducedMotionMq.matches) {
+        setHeavenRandomWord(shuffledWords[0]);
+        setHeavenTypedText(shuffledWords[0]);
+        return;
+      }
+
+      let wordIndex = 0;
+      let charIndex = 0;
+      let isDeleting = false;
+      setHeavenRandomWord(shuffledWords[0]);
+      setHeavenTypedText('');
+
+      const step = () => {
+        const currentWord = shuffledWords[wordIndex];
+
+        if (!isDeleting) {
+          charIndex += 1;
+          setHeavenTypedText(currentWord.slice(0, charIndex));
+
+          if (charIndex >= currentWord.length) {
+            isDeleting = true;
+            timerId = window.setTimeout(step, 2400);
+          } else {
+            timerId = window.setTimeout(step, 230);
+          }
+        } else {
+          charIndex -= 1;
+          setHeavenTypedText(currentWord.slice(0, Math.max(0, charIndex)));
+
+          if (charIndex <= 0) {
+            isDeleting = false;
+            wordIndex = (wordIndex + 1) % shuffledWords.length;
+            setHeavenRandomWord(shuffledWords[wordIndex]);
+            timerId = window.setTimeout(step, 800);
+          } else {
+            timerId = window.setTimeout(step, 150);
+          }
+        }
+      };
+
+      timerId = window.setTimeout(step, 600);
+    };
+
+    syncHeavenAnimation();
+
+    reducedMotionMq.addEventListener('change', syncHeavenAnimation);
+
+    return () => {
+      clearTypingTimer();
+      reducedMotionMq.removeEventListener('change', syncHeavenAnimation);
+    };
+  }, []);
 
   const isBubbleOpen = modalState.mode === 'bubble' && activeItem !== null;
   const isWindowOpen = modalState.mode === 'window' && activeItem !== null;
@@ -498,59 +591,23 @@ export default function PortfolioView({
             </div>
 
             <div className="footer-meta-row">
-              <div className="footer-code-detail">
-                <div
-                  className="heaven-snippet-trigger"
-                  tabIndex={0}
-                  aria-label="Python import note: from Heaven import P, with autocomplete suggestions"
-                  aria-describedby="heaven-autocomplete-list"
-                >
-                  <code className="heaven-snippet-code">
-                    <span className="heaven-kw">from</span> Heaven{' '}
-                    <span className="heaven-kw">import</span>{' '}
-                    <span className="heaven-prefix">P</span>
-                  </code>
-
-                  <ul
-                    id="heaven-autocomplete-list"
-                    className="heaven-autocomplete"
-                    aria-label="Autocomplete suggestions"
-                  >
-                    {heavenCompletions.map((word) => (
-                      <li key={word} className="heaven-autocomplete-item">
-                        <span className="heaven-match">{word.slice(0, 1)}</span>
-                        <span>{word.slice(1)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              <div
+                className="footer-code-detail"
+                aria-label={`Python import note: from Heaven import ${heavenRandomWord}`}
+              >
+                <code className="heaven-snippet-code" aria-hidden="true">
+                  <span className="heaven-kw">from</span> Heaven{' '}
+                  <span className="heaven-kw">import</span>{' '}
+                  <span className="heaven-word-pill">
+                    <span className="heaven-prefix">
+                      {heavenTypedText || '\u200B'}
+                    </span>
+                  </span>
+                </code>
               </div>
 
               <HeartbeatStatus />
             </div>
-
-            <section
-              id="heartbeat"
-              className="heartbeat-section case-study-prose"
-              aria-labelledby="heartbeat-heading"
-            >
-              <h2 id="heartbeat-heading" className="heartbeat-section-title">
-                Heartbeat pipeline
-              </h2>
-              <p className="heartbeat-section-body">
-                A scheduled GitHub Actions workflow runs every six hours (and on
-                manual dispatch) using the built-in <code>GITHUB_TOKEN</code> to
-                query the public GitHub API for my latest activity on{' '}
-                <code>coleRodneyMigisha</code>. It writes{' '}
-                <code>heartbeat.json</code> (<code>updated_at</code>,{' '}
-                <code>latest_repo</code>, <code>latest_event</code> and{' '}
-                <code>run_status</code>) and commits it to an isolated{' '}
-                <code>data</code> branch so that scheduled runs never trigger a
-                site rebuild. At runtime, the browser fetches the raw file from
-                that branch without secrets, caches the last good run locally,
-                and hides the status line if the data is unreachable or old.
-              </p>
-            </section>
           </div>
         </footer>
       </div>

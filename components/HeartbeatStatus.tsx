@@ -134,7 +134,7 @@ export default function HeartbeatStatus() {
 
   return (
     <p className="heartbeat-line">
-      <a href="#heartbeat" className="heartbeat-status-link">
+      <a href="#projects" className="heartbeat-status-link">
         heartbeat: last run {timeLabel}
       </a>
     </p>
