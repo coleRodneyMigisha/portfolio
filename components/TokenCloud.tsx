@@ -64,6 +64,10 @@ export default function TokenCloud() {
     let isOnScreen = true;
     let isTabVisible = typeof document !== 'undefined' ? !document.hidden : true;
     let prefersReducedMotion = false;
+    let isModalOpen =
+      typeof document !== 'undefined'
+        ? document.documentElement.hasAttribute('data-modal-open')
+        : false;
 
     let width = 0;
     let height = 0;
@@ -309,7 +313,11 @@ export default function TokenCloud() {
     };
 
     const shouldAnimate = () =>
-      !isDisposed && isOnScreen && isTabVisible && !prefersReducedMotion;
+      !isDisposed &&
+      isOnScreen &&
+      isTabVisible &&
+      !prefersReducedMotion &&
+      !isModalOpen;
 
     const tick = (timestamp: number) => {
       if (!shouldAnimate()) {
@@ -379,7 +387,13 @@ export default function TokenCloud() {
       renderCloudFrame(prefersReducedMotion ? 0 : simTimeSec);
     };
 
-    const handleThemeOrAccentChange = () => {
+    const handleRootAttributeChange = () => {
+      const nextModalOpen =
+        document.documentElement.hasAttribute('data-modal-open');
+      if (nextModalOpen !== isModalOpen) {
+        isModalOpen = nextModalOpen;
+        syncLoopState();
+      }
       const nextAccent = readAccentColor();
       if (nextAccent !== currentAccent || !atlasCanvas) {
         buildSpriteAtlas();
@@ -413,9 +427,11 @@ export default function TokenCloud() {
           reducedMotionMedia.addEventListener('change', handleReducedMotionChange);
 
           colorSchemeMedia = window.matchMedia('(prefers-color-scheme: light)');
-          colorSchemeMedia.addEventListener('change', handleThemeOrAccentChange);
+          colorSchemeMedia.addEventListener('change', handleRootAttributeChange);
         }
 
+        isModalOpen =
+          document.documentElement.hasAttribute('data-modal-open');
         handleResize();
 
         if (typeof document !== 'undefined' && 'fonts' in document && document.fonts?.ready) {
@@ -441,10 +457,10 @@ export default function TokenCloud() {
         }
 
         if ('MutationObserver' in window) {
-          mutationObserver = new MutationObserver(handleThemeOrAccentChange);
+          mutationObserver = new MutationObserver(handleRootAttributeChange);
           mutationObserver.observe(document.documentElement, {
             attributes: true,
-            attributeFilter: ['data-theme', 'class'],
+            attributeFilter: ['data-theme', 'class', 'data-modal-open'],
           });
         }
 
@@ -466,7 +482,7 @@ export default function TokenCloud() {
         reducedMotionMedia.removeEventListener('change', handleReducedMotionChange);
       }
       if (colorSchemeMedia) {
-        colorSchemeMedia.removeEventListener('change', handleThemeOrAccentChange);
+        colorSchemeMedia.removeEventListener('change', handleRootAttributeChange);
       }
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('visibilitychange', handleVisibilityChange);

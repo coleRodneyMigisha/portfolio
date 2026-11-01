@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import type { WorkItem } from '@/lib/content';
 
 interface WorkBandProps {
@@ -9,21 +8,48 @@ interface WorkBandProps {
   title: string;
   direction: 'rtl' | 'ltr';
   items: WorkItem[];
+  onOpenWindow: (item: WorkItem, triggerEl: HTMLElement | null) => void;
 }
 
 const TARGET_SPEED_PX_PER_SEC = 15;
 const FALLBACK_CARD_SLOT_PX = 384; // 360px card + 24px gap
 const CLONE_SET_INDICES = [1, 2, 3] as const;
 
+function isPlainLeftClick(e: React.MouseEvent<HTMLAnchorElement>): boolean {
+  return (
+    e.button === 0 &&
+    !e.metaKey &&
+    !e.ctrlKey &&
+    !e.shiftKey &&
+    !e.altKey &&
+    !e.defaultPrevented
+  );
+}
+
 function BandCard({
   item,
   isClone,
+  onOpenWindow,
 }: {
   item: WorkItem;
   isClone: boolean;
+  onOpenWindow: (item: WorkItem, triggerEl: HTMLElement | null) => void;
 }) {
+  const triggerRef = useRef<HTMLAnchorElement & HTMLButtonElement>(null);
+
+  const handleCardSurfaceClick = (e: React.MouseEvent<HTMLLIElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button')) {
+      return;
+    }
+    onOpenWindow(item, triggerRef.current);
+  };
+
   return (
-    <li className="band-card glass-surface-no-blur">
+    <li
+      className="band-card glass-surface-no-blur"
+      onClick={handleCardSurfaceClick}
+    >
       <div className="band-card-top">
         <span className="band-card-group">{item.group}</span>
         <span className="band-card-status">
@@ -34,22 +60,30 @@ function BandCard({
 
       <h3 className="band-card-title">
         {item.level === 'full' ? (
-          <Link
+          <a
+            ref={triggerRef}
             href={`/work/${item.slug}`}
             className="band-card-link"
             tabIndex={isClone ? -1 : undefined}
+            onClick={(e) => {
+              if (isPlainLeftClick(e)) {
+                e.preventDefault();
+                onOpenWindow(item, e.currentTarget);
+              }
+            }}
           >
             {item.title}
-          </Link>
+          </a>
         ) : (
-          <span
-            className="band-card-link"
-            tabIndex={isClone ? -1 : 0}
-            role={isClone ? undefined : 'button'}
-            aria-label={`${item.title} (${item.status}${item.team ? ', Team project' : ''})`}
+          <button
+            ref={triggerRef}
+            type="button"
+            className="band-card-link band-card-btn"
+            tabIndex={isClone ? -1 : undefined}
+            onClick={(e) => onOpenWindow(item, e.currentTarget)}
           >
             {item.title}
-          </span>
+          </button>
         )}
       </h3>
 
@@ -65,6 +99,7 @@ export default function WorkBand({
   title,
   direction,
   items,
+  onOpenWindow,
 }: WorkBandProps) {
   const [isPaused, setIsPaused] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -175,11 +210,16 @@ export default function WorkBand({
           {/* Canonical keyboard-reachable set */}
           <ul ref={firstSetRef} className="band-set">
             {items.map((item) => (
-              <BandCard key={item.slug} item={item} isClone={false} />
+              <BandCard
+                key={item.slug}
+                item={item}
+                isClone={false}
+                onOpenWindow={onOpenWindow}
+              />
             ))}
           </ul>
 
-          {/* Seamless loop sets for >= 1024px desktop drift */}
+          {/* Seamless loop sets for desktop drift */}
           {CLONE_SET_INDICES.map((cloneIndex) => (
             <ul
               key={cloneIndex}
@@ -191,6 +231,7 @@ export default function WorkBand({
                   key={`${item.slug}-clone-${cloneIndex}`}
                   item={item}
                   isClone={true}
+                  onOpenWindow={onOpenWindow}
                 />
               ))}
             </ul>
@@ -198,7 +239,7 @@ export default function WorkBand({
         </div>
       </div>
 
-      {/* Plain list view toggled by "View all" */}
+      {/* Plain list view toggled by "View all" — clicking any item also opens the glass window */}
       <div
         id={`${id}-all`}
         className="site-shell band-all-wrapper"
@@ -206,13 +247,40 @@ export default function WorkBand({
       >
         <ul className="plain-work-list" aria-label={`All ${title} items`}>
           {items.map((item) => (
-            <li key={item.slug} className="plain-work-item">
+            <li
+              key={item.slug}
+              className="plain-work-item"
+              onClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest('a, button')) return;
+                const trigger = e.currentTarget.querySelector<HTMLElement>(
+                  'a, button'
+                );
+                onOpenWindow(item, trigger);
+              }}
+            >
               <div className="plain-work-header">
                 <h3 className="plain-work-title">
                   {item.level === 'full' ? (
-                    <Link href={`/work/${item.slug}`}>{item.title}</Link>
+                    <a
+                      href={`/work/${item.slug}`}
+                      onClick={(e) => {
+                        if (isPlainLeftClick(e)) {
+                          e.preventDefault();
+                          onOpenWindow(item, e.currentTarget);
+                        }
+                      }}
+                    >
+                      {item.title}
+                    </a>
                   ) : (
-                    item.title
+                    <button
+                      type="button"
+                      className="plain-work-btn"
+                      onClick={(e) => onOpenWindow(item, e.currentTarget)}
+                    >
+                      {item.title}
+                    </button>
                   )}
                 </h3>
                 <span className="work-meta">
