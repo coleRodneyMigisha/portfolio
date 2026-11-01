@@ -1,66 +1,15 @@
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
 import TokenCloud from '@/components/TokenCloud';
+import WorkBand from '@/components/WorkBand';
+import ScrollReveal from '@/components/ScrollReveal';
 import {
   getSiteConfig,
   getVisibleSiteLinks,
   getStackConfig,
   getAboutContent,
   getVisibleItemsByKind,
-  type WorkItem,
 } from '@/lib/content';
-
-function WorkCard({ item }: { item: WorkItem }) {
-  return (
-    <li className="work-card">
-      <div>
-        <h3 className="work-card-title">
-          {item.level === 'full' ? (
-            <Link href={`/work/${item.slug}`}>{item.title}</Link>
-          ) : (
-            item.title
-          )}
-        </h3>
-        <p className="work-meta">
-          <span>{item.status}</span>
-          <span aria-hidden="true"> · </span>
-          <span>{item.group}</span>
-          <span aria-hidden="true"> · </span>
-          <span>{item.date}</span>
-          {item.team && (
-            <>
-              <span aria-hidden="true"> · </span>
-              <span>Team project</span>
-            </>
-          )}
-        </p>
-      </div>
-
-      <p className="work-summary">{item.summary}</p>
-
-      <div>
-        <p className="work-tags">{item.tags.join(' · ')}</p>
-        {(item.level === 'full' || item.links.length > 0) && (
-          <div className="work-card-footer">
-            {item.level === 'full' && (
-              <Link href={`/work/${item.slug}`}>Read case study</Link>
-            )}
-            {item.links.map((link) => (
-              <a
-                key={link.url}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {link.label}
-              </a>
-            ))}
-          </div>
-        )}
-      </div>
-    </li>
-  );
-}
 
 export default function HomePage() {
   const site = getSiteConfig();
@@ -74,6 +23,7 @@ export default function HomePage() {
 
   return (
     <>
+      <ScrollReveal />
       <header className="site-header">
         <div className="site-shell site-header-inner">
           <Link href="/" className="brand-mark">
@@ -90,7 +40,7 @@ export default function HomePage() {
       </header>
 
       <main>
-        {/* 1. Landing (Full-viewport screen) */}
+        {/* 1. Landing (Full-viewport screen — no scroll reveal applied) */}
         <section id="landing" className="landing-section" aria-labelledby="hero-heading">
           <TokenCloud />
           <div className="landing-content">
@@ -101,121 +51,115 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* 2. About Me */}
         <div className="site-shell">
-          {/* 2. About Me */}
-        <section id="about" className="page-section" aria-labelledby="about-heading">
-          <div className="section-header">
-            <h2 id="about-heading" className="section-title">
-              About Me
-            </h2>
-          </div>
-
-          <div className="about-grid">
-            <div className="case-study-prose">
-              {about.aboutParagraphs.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
+          <section id="about" className="page-section" aria-labelledby="about-heading">
+            <div className="section-header" data-reveal>
+              <h2 id="about-heading" className="section-title">
+                About Me
+              </h2>
             </div>
 
-            <div>
-              <div className="about-subsection">
-                <h3 className="about-subsection-title">Experience</h3>
-                <ul className="clean-list">
-                  {about.experience.map((entry) => (
-                    <li key={entry}>{entry}</li>
-                  ))}
-                </ul>
+            <div className="about-grid">
+              <div className="case-study-prose">
+                {about.aboutParagraphs.map((paragraph, index) => (
+                  <p key={index} data-reveal data-reveal-index={index}>
+                    {paragraph}
+                  </p>
+                ))}
               </div>
 
-              <div className="about-subsection">
-                <h3 className="about-subsection-title">Achievements</h3>
-                <ul className="clean-list">
-                  {about.achievements.map((entry) => (
-                    <li key={entry}>{entry}</li>
-                  ))}
-                </ul>
-              </div>
+              <div>
+                <div className="about-subsection">
+                  <h3 className="about-subsection-title" data-reveal>
+                    Experience
+                  </h3>
+                  <ul className="clean-list">
+                    {about.experience.map((entry, index) => (
+                      <li key={entry} data-reveal data-reveal-index={index}>
+                        {entry}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
 
-              <div className="about-subsection">
-                <h3 className="about-subsection-title">Education</h3>
-                <ul className="clean-list">
-                  {about.education.map((entry) => (
-                    <li key={entry}>{entry}</li>
-                  ))}
-                </ul>
+                <div className="about-subsection">
+                  <h3 className="about-subsection-title" data-reveal>
+                    Achievements
+                  </h3>
+                  <ul className="clean-list">
+                    {about.achievements.map((entry, index) => (
+                      <li key={entry} data-reveal data-reveal-index={index}>
+                        {entry}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="about-subsection">
+                  <h3 className="about-subsection-title" data-reveal>
+                    Education
+                  </h3>
+                  <ul className="clean-list">
+                    {about.education.map((entry, index) => (
+                      <li key={entry} data-reveal data-reveal-index={index}>
+                        {entry}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
 
-        {/* 3. Research */}
-        <section
+        {/* 3. Research band (Full-width outside content container, drifts right to left) */}
+        <WorkBand
           id="research"
-          className="page-section"
-          aria-labelledby="research-heading"
-        >
-          <div className="section-header">
-            <h2 id="research-heading" className="section-title">
-              Research
-            </h2>
-          </div>
+          title="Research"
+          direction="rtl"
+          items={researchItems}
+        />
 
-          <ul className="work-list">
-            {researchItems.map((item) => (
-              <WorkCard key={item.slug} item={item} />
-            ))}
-          </ul>
-        </section>
-
-        {/* 4. Projects */}
-        <section
+        {/* 4. Projects band (Full-width outside content container, drifts left to right) */}
+        <WorkBand
           id="projects"
-          className="page-section"
-          aria-labelledby="projects-heading"
-        >
-          <div className="section-header">
-            <h2 id="projects-heading" className="section-title">
-              Projects
-            </h2>
-          </div>
-
-          <ul className="work-list">
-            {projectItems.map((item) => (
-              <WorkCard key={item.slug} item={item} />
-            ))}
-          </ul>
-        </section>
+          title="Projects"
+          direction="ltr"
+          items={projectItems}
+        />
 
         {/* 5. Technology list */}
-        <section id="stack" className="page-section" aria-labelledby="stack-heading">
-          <div className="section-header">
-            <h2 id="stack-heading" className="section-title">
-              Technology
-            </h2>
-          </div>
-
-          <div className="stack-groups">
-            <div className="stack-group">
-              <h3 className="stack-group-title">Confident</h3>
-              <p className="stack-items">{stack.confident.join(' · ')}</p>
+        <div className="site-shell">
+          <section id="stack" className="page-section" aria-labelledby="stack-heading">
+            <div className="section-header" data-reveal>
+              <h2 id="stack-heading" className="section-title">
+                Technology
+              </h2>
             </div>
 
-            <div className="stack-group">
-              <h3 className="stack-group-title">Used</h3>
-              <p className="stack-items">{stack.used.join(' · ')}</p>
-            </div>
+            <div className="stack-groups">
+              <div className="stack-group" data-reveal data-reveal-index={0}>
+                <h3 className="stack-group-title">Confident</h3>
+                <p className="stack-items">{stack.confident.join(' · ')}</p>
+              </div>
 
-            <div className="stack-group">
-              <h3 className="stack-group-title">Learning</h3>
-              <p className="stack-items">{stack.learning.join(' · ')}</p>
+              <div className="stack-group" data-reveal data-reveal-index={1}>
+                <h3 className="stack-group-title">Used</h3>
+                <p className="stack-items">{stack.used.join(' · ')}</p>
+              </div>
+
+              <div className="stack-group" data-reveal data-reveal-index={2}>
+                <h3 className="stack-group-title">Learning</h3>
+                <p className="stack-items">{stack.learning.join(' · ')}</p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
         </div>
       </main>
 
       {/* 6. Footer */}
-      <footer className="site-footer">
+      <footer className="site-footer" data-reveal>
         <div className="site-shell site-footer-inner">
           <p className="footer-brand">{site.name}</p>
           <ul className="inline-link-list" aria-label="Footer links">

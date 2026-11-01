@@ -22,7 +22,6 @@ const TOKENS = [
 
 const FPS_CAP = 30;
 const FRAME_INTERVAL_MS = 1000 / FPS_CAP;
-const HEARTBEAT_PERIOD_SEC = 7.0; // Shared subtle 6-8s heartbeat
 const ALPHA_BUCKETS = [0.06, 0.09, 0.13, 0.17, 0.21, 0.25] as const;
 
 interface SpriteCell {
@@ -70,6 +69,7 @@ export default function TokenCloud() {
     let height = 0;
     let dpr = 1;
     let currentAccent = '#C79A5B';
+    let heartbeatPeriodSec = 7.0;
 
     let atlasCanvas: HTMLCanvasElement | null = null;
     let spriteCells: SpriteCell[] = [];
@@ -82,6 +82,21 @@ export default function TokenCloud() {
     let mutationObserver: MutationObserver | null = null;
     let reducedMotionMedia: MediaQueryList | null = null;
     let colorSchemeMedia: MediaQueryList | null = null;
+
+    const readHeartbeatPeriodSec = (): number => {
+      if (typeof window === 'undefined') return 7.0;
+      const raw = window
+        .getComputedStyle(document.documentElement)
+        .getPropertyValue('--heartbeat-period')
+        .trim();
+      if (!raw) return 7.0;
+      if (raw.endsWith('ms')) {
+        const ms = parseFloat(raw);
+        return Number.isFinite(ms) && ms > 0 ? ms / 1000 : 7.0;
+      }
+      const sec = parseFloat(raw);
+      return Number.isFinite(sec) && sec > 0 ? sec : 7.0;
+    };
 
     const readAccentColor = (): string => {
       if (typeof window === 'undefined') return '#C79A5B';
@@ -103,6 +118,7 @@ export default function TokenCloud() {
 
     const buildSpriteAtlas = () => {
       currentAccent = readAccentColor();
+      heartbeatPeriodSec = readHeartbeatPeriodSec();
       const fontFamily = readFontFamily();
       const fontSizeCss = width < 768 ? 11 : 12;
       const cellPad = 6;
@@ -215,9 +231,9 @@ export default function TokenCloud() {
       const rxBase = Math.min(width * 0.45, 620);
       const ryBase = Math.min(height * 0.38, 380);
 
-      // Shared 7-second subtle heartbeat + slow organic shape morphing
+      // Shared subtle heartbeat read from --heartbeat-period + slow organic shape morphing
       const heartbeat =
-        1 + 0.035 * Math.sin((timeSec * Math.PI * 2) / HEARTBEAT_PERIOD_SEC);
+        1 + 0.035 * Math.sin((timeSec * Math.PI * 2) / heartbeatPeriodSec);
       const morphA = 0.12 * Math.sin(timeSec * 0.21);
       const morphB = 0.09 * Math.cos(timeSec * 0.15);
       const cloudTilt = 0.18 * Math.sin(timeSec * 0.11);
@@ -401,6 +417,14 @@ export default function TokenCloud() {
         }
 
         handleResize();
+
+        if (typeof document !== 'undefined' && 'fonts' in document && document.fonts?.ready) {
+          document.fonts.ready.then(() => {
+            if (isDisposed || width === 0 || height === 0) return;
+            buildSpriteAtlas();
+            renderCloudFrame(prefersReducedMotion ? 0 : simTimeSec);
+          });
+        }
 
         if ('IntersectionObserver' in window) {
           intersectionObserver = new IntersectionObserver(
