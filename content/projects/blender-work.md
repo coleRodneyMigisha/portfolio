@@ -10,7 +10,7 @@ group: "Building and shaping systems"
 date: "2026-02"
 level: "short"
 team: false
-image: ""
+image: "/images/blender-first-project.jpg"
 links: []
 order: 12
 visible: true

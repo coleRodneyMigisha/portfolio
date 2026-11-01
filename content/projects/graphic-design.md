@@ -6,16 +6,22 @@ summary: "Posters designed for the Honours College at Uganda Christian Universit
 status: "Gallery"
 tags:
   - "Inkscape"
-  - "Illustrator"
-  - "Figma"
 group: "Building and shaping systems"
 date: "2026-10"
-level: "short"
+level: "full"
 team: false
-image: ""
+image: "/images/design-october.jpg"
 links: []
 order: 11
 visible: true
 ---
 
-Posters designed for the Honours College at Uganda Christian University.
+A selection of posters I designed for the Honours College at Uganda Christian University.
+
+![General election poster](/images/design-election.jpg)
+
+![Fasting and prayer poster](/images/design-fasting.jpg)
+
+![October greeting poster](/images/design-october.jpg)
+
+![November greeting poster](/images/design-november.jpg)
