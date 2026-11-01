@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import PortfolioView from '@/components/PortfolioView';
 import {
+  SITE_URL,
   getSiteConfig,
   getVisibleSiteLinks,
   getStackConfig,
@@ -10,6 +11,7 @@ import {
   getFullWorkItems,
   getFullWorkItemBySlug,
 } from '@/lib/content';
+import { renderFullWorkBodies } from '@/lib/markdown';
 
 export const dynamicParams = false;
 
@@ -35,9 +37,37 @@ export async function generateMetadata({
     };
   }
 
+  const pageTitle = `${item.title} | ${site.name}`;
+  const canonicalUrl = `${SITE_URL}/work/${item.slug}`;
+  const ogImageUrl = item.image
+    ? `${SITE_URL}${item.image}`
+    : `${SITE_URL}/og-image.png`;
+
   return {
-    title: `${item.title} | ${site.name}`,
+    title: pageTitle,
     description: item.summary,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: pageTitle,
+      description: item.summary,
+      url: canonicalUrl,
+      siteName: site.name,
+      type: 'article',
+      images: [
+        {
+          url: ogImageUrl,
+          alt: item.title,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle,
+      description: item.summary,
+      images: [ogImageUrl],
+    },
   };
 }
 
@@ -59,6 +89,10 @@ export default async function WorkItemPage({
   const researchItems = getVisibleItemsByKind('research');
   const projectItems = getVisibleItemsByKind('project');
   const stack = getStackConfig();
+  const renderedBodies = renderFullWorkBodies([
+    ...researchItems,
+    ...projectItems,
+  ]);
 
   return (
     <PortfolioView
@@ -68,6 +102,7 @@ export default async function WorkItemPage({
       researchItems={researchItems}
       projectItems={projectItems}
       stack={stack}
+      renderedBodies={renderedBodies}
       initialBubbleSlug={item.slug}
     />
   );

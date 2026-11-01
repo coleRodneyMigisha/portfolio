@@ -1,8 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Link from 'next/link';
-import Markdown from 'react-markdown';
+import { File, Github, Linkedin, Mail } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import TopNav from '@/components/TopNav';
 import TokenCloud from '@/components/TokenCloud';
@@ -10,6 +17,7 @@ import WorkBand from '@/components/WorkBand';
 import ScrollReveal from '@/components/ScrollReveal';
 import HeartbeatStatus from '@/components/HeartbeatStatus';
 import HeavenSnippet from '@/components/HeavenSnippet';
+import { SITE_URL } from '@/lib/site-url';
 import type {
   AboutContent,
   SiteConfig,
@@ -31,6 +39,7 @@ interface PortfolioViewProps {
   researchItems: WorkItem[];
   projectItems: WorkItem[];
   stack: StackConfig;
+  renderedBodies: Record<string, ReactNode>;
   initialBubbleSlug?: string | null;
 }
 
@@ -55,6 +64,46 @@ function parseWorkSlugFromPathname(pathname: string): string | null {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
+function updateCanonicalLink(href: string): void {
+  if (typeof document === 'undefined') return;
+  const canonical = document.querySelector<HTMLLinkElement>(
+    'link[rel="canonical"]'
+  );
+  if (canonical) {
+    canonical.href = href;
+  }
+}
+
+function renderFooterLinkIcon(key: string, label: string): ReactNode {
+  switch (key) {
+    case 'email':
+      return (
+        <Mail className="footer-icon" strokeWidth={1.75} aria-hidden="true" />
+      );
+    case 'linkedin':
+      return (
+        <Linkedin
+          className="footer-icon"
+          strokeWidth={1.75}
+          aria-hidden="true"
+        />
+      );
+    case 'github':
+      return (
+        <Github className="footer-icon" strokeWidth={1.75} aria-hidden="true" />
+      );
+    case 'cv':
+      return (
+        <span className="footer-cv-icon-wrap" aria-hidden="true">
+          <File className="footer-icon footer-cv-file-icon" strokeWidth={1.65} />
+          <span className="footer-cv-letters">CV</span>
+        </span>
+      );
+    default:
+      return <span>{label}</span>;
+  }
+}
+
 export default function PortfolioView({
   site,
   visibleSiteLinks,
@@ -62,6 +111,7 @@ export default function PortfolioView({
   researchItems,
   projectItems,
   stack,
+  renderedBodies,
   initialBubbleSlug = null,
 }: PortfolioViewProps) {
   const allItems = useMemo(
@@ -79,6 +129,7 @@ export default function PortfolioView({
   const pushedBubbleHistoryRef = useRef<boolean>(false);
   const dialogPanelRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lastOpenedSlugRef = useRef<string | null>(initialBubbleSlug);
 
   const activeItem = useMemo(() => {
     if (modalState.mode === 'closed') return null;
@@ -86,21 +137,31 @@ export default function PortfolioView({
   }, [allItems, modalState]);
 
   const restoreFocusToTrigger = useCallback(() => {
-    const triggerEl = triggerElementRef.current;
-    if (triggerEl && typeof triggerEl.focus === 'function') {
-      window.requestAnimationFrame(() => {
+    const slug = lastOpenedSlugRef.current;
+    window.requestAnimationFrame(() => {
+      const triggerEl =
+        triggerElementRef.current ??
+        (slug
+          ? document.querySelector<HTMLElement>(
+              `.band-set:not(.band-set-clone) a[href="/work/${slug}"]`
+            )
+          : null) ??
+        document.getElementById('main-content');
+
+      if (triggerEl && typeof triggerEl.focus === 'function') {
         try {
           triggerEl.focus({ preventScroll: true });
         } catch {
           triggerEl.focus();
         }
-      });
-    }
+      }
+    });
   }, []);
 
   const handleOpenWindow = useCallback(
     (item: WorkItem, triggerEl: HTMLElement | null) => {
       triggerElementRef.current = triggerEl;
+      lastOpenedSlugRef.current = item.slug;
       setModalState({ mode: 'window', slug: item.slug });
     },
     []
@@ -111,6 +172,7 @@ export default function PortfolioView({
       if (!isPlainLeftClick(e)) return;
       e.preventDefault();
 
+      lastOpenedSlugRef.current = item.slug;
       setModalState({
         mode: 'bubble',
         slug: item.slug,
@@ -128,6 +190,7 @@ export default function PortfolioView({
         // Ignore history errors in restricted iframe environments
       }
       document.title = `${item.title} | ${site.name}`;
+      updateCanonicalLink(`${SITE_URL}/work/${item.slug}`);
     },
     [site.name]
   );
@@ -149,6 +212,7 @@ export default function PortfolioView({
         // Ignore history errors
       }
       document.title = site.name;
+      updateCanonicalLink(`${SITE_URL}/`);
     }
 
     setModalState({ mode: 'closed' });
@@ -166,18 +230,21 @@ export default function PortfolioView({
           (item) => item.slug === slugFromUrl && item.level === 'full'
         );
         if (matched) {
+          lastOpenedSlugRef.current = matched.slug;
           setModalState({
             mode: 'bubble',
             slug: matched.slug,
             growFromWindow: false,
           });
           document.title = `${matched.title} | ${site.name}`;
+          updateCanonicalLink(`${SITE_URL}/work/${matched.slug}`);
           return;
         }
       }
 
       pushedBubbleHistoryRef.current = false;
       document.title = site.name;
+      updateCanonicalLink(`${SITE_URL}/`);
       setModalState({ mode: 'closed' });
       restoreFocusToTrigger();
     };
@@ -284,7 +351,13 @@ export default function PortfolioView({
         focusable="false"
       >
         <defs>
-          <filter id="glass-edge-refraction" x="-5%" y="-5%" width="110%" height="110%">
+          <filter
+            id="glass-edge-refraction"
+            x="-5%"
+            y="-5%"
+            width="110%"
+            height="110%"
+          >
             <feTurbulence
               type="fractalNoise"
               baseFrequency="0.015"
@@ -309,7 +382,12 @@ export default function PortfolioView({
           isBubbleOpen ? 'home-backdrop-dimmed' : ''
         }`}
         aria-hidden={isWindowOpen || isBubbleOpen ? 'true' : undefined}
+        inert={isWindowOpen || isBubbleOpen ? true : undefined}
       >
+        <a href="#main-content" className="skip-link glass-control">
+          Skip to main content
+        </a>
+
         <header className="site-header">
           <div className="site-shell site-header-inner">
             <Link href="/" className="brand-mark">
@@ -320,7 +398,7 @@ export default function PortfolioView({
           </div>
         </header>
 
-        <main>
+        <main id="main-content" tabIndex={-1}>
           {/* 1. Landing (Full-viewport screen — no scroll reveal applied) */}
           <section
             id="landing"
@@ -437,7 +515,7 @@ export default function PortfolioView({
             <div
               className="stack-marquee-viewport"
               tabIndex={0}
-              role="region"
+              role="group"
               aria-label="Technology stack"
               data-reveal
             >
@@ -479,21 +557,52 @@ export default function PortfolioView({
           <div className="site-shell site-footer-inner">
             <div className="site-footer-top">
               <p className="footer-brand">{site.name}</p>
-              <ul className="inline-link-list" aria-label="Profile and contact links">
-                {visibleSiteLinks.map((link) => (
-                  <li key={link.key}>
-                    <a
-                      href={link.href}
-                      target={link.key === 'email' ? undefined : '_blank'}
-                      rel={
-                        link.key === 'email' ? undefined : 'noopener noreferrer'
-                      }
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+              <nav aria-label="Profile and contact links">
+                <ul className="inline-link-list">
+                  {visibleSiteLinks.map((link) => {
+                    const isIconLink =
+                      link.key === 'email' ||
+                      link.key === 'linkedin' ||
+                      link.key === 'github' ||
+                      link.key === 'cv';
+
+                    return (
+                      <li key={link.key}>
+                        <a
+                          href={link.href}
+                          className={
+                            isIconLink ? 'footer-icon-link' : undefined
+                          }
+                          title={link.label}
+                          target={link.key === 'email' ? undefined : '_blank'}
+                          rel={
+                            link.key === 'email'
+                              ? undefined
+                              : 'noopener noreferrer'
+                          }
+                        >
+                          {renderFooterLinkIcon(link.key, link.label)}
+                          {isIconLink ? (
+                            <span className="sr-only">
+                              {link.label}
+                              {link.key !== 'email'
+                                ? ' (opens in a new tab)'
+                                : ''}
+                            </span>
+                          ) : (
+                            link.key !== 'email' && (
+                              <span className="sr-only">
+                                {' '}
+                                (opens in a new tab)
+                              </span>
+                            )
+                          )}
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
             </div>
 
             <div className="footer-meta-row">
@@ -524,6 +633,8 @@ export default function PortfolioView({
             role="dialog"
             aria-modal="true"
             aria-labelledby="work-dialog-title"
+            aria-describedby="work-dialog-summary"
+            tabIndex={-1}
             className={
               modalState.mode === 'bubble'
                 ? `work-bubble-panel ${
@@ -576,7 +687,9 @@ export default function PortfolioView({
                 {activeItem.title}
               </h2>
 
-              <p className="work-dialog-summary">{activeItem.summary}</p>
+              <p id="work-dialog-summary" className="work-dialog-summary">
+                {activeItem.summary}
+              </p>
 
               {activeItem.image.trim().length > 0 && (
                 <div className="work-dialog-image-frame">
@@ -584,15 +697,15 @@ export default function PortfolioView({
                     src={activeItem.image}
                     alt={activeItem.title}
                     className="work-dialog-image"
+                    loading="lazy"
+                    decoding="async"
                     referrerPolicy="no-referrer"
                   />
                 </div>
               )}
 
               {activeItem.tags.length > 0 && (
-                <p className="work-tags">
-                  {activeItem.tags.join(' · ')}
-                </p>
+                <p className="work-tags">{activeItem.tags.join(' · ')}</p>
               )}
 
               {modalState.mode === 'window' ? (
@@ -616,6 +729,7 @@ export default function PortfolioView({
                       className="glass-control"
                     >
                       {link.label}
+                      <span className="sr-only"> (opens in a new tab)</span>
                     </a>
                   ))}
                 </div>
@@ -623,7 +737,7 @@ export default function PortfolioView({
                 <>
                   <div className="work-bubble-divider" />
                   <article className="case-study-prose work-bubble-markdown">
-                    <Markdown>{activeItem.body}</Markdown>
+                    {renderedBodies[activeItem.slug]}
                   </article>
 
                   {activeItem.links.length > 0 && (
@@ -637,6 +751,7 @@ export default function PortfolioView({
                           className="glass-control"
                         >
                           {link.label}
+                          <span className="sr-only"> (opens in a new tab)</span>
                         </a>
                       ))}
                     </div>

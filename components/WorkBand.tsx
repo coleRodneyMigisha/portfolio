@@ -148,8 +148,7 @@ export default function WorkBand({
     };
   }, [id, items.length]);
 
-  const handleViewAllClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
+  const handleToggleShowAll = () => {
     setShowAll((prev) => !prev);
   };
 
@@ -170,7 +169,6 @@ export default function WorkBand({
               type="button"
               className="glass-control band-pause-btn"
               onClick={() => setIsPaused((prev) => !prev)}
-              aria-pressed={isPaused}
               aria-label={
                 isPaused ? `Resume ${title} band drift` : `Pause ${title} band drift`
               }
@@ -178,15 +176,16 @@ export default function WorkBand({
               {isPaused ? 'Resume' : 'Pause'}
             </button>
 
-            <a
-              href={`#${id}-all`}
+            <button
+              type="button"
               className="glass-control band-view-all-link"
-              onClick={handleViewAllClick}
+              onClick={handleToggleShowAll}
               aria-expanded={showAll}
               aria-controls={`${id}-all`}
             >
               {showAll ? 'Hide list' : 'View all'}
-            </a>
+              <span className="sr-only"> {title} items</span>
+            </button>
           </div>
         </div>
       </div>
@@ -194,7 +193,7 @@ export default function WorkBand({
       {/* Full-width floating band outside the page's content container */}
       <div
         className="band-viewport"
-        role="region"
+        role="group"
         data-reveal
         data-reveal-index={1}
         data-direction={direction}
@@ -226,6 +225,7 @@ export default function WorkBand({
               key={cloneIndex}
               className="band-set band-set-clone"
               aria-hidden="true"
+              inert
             >
               {items.map((item) => (
                 <BandCard
@@ -246,7 +246,7 @@ export default function WorkBand({
         className="site-shell band-all-wrapper"
         hidden={!showAll}
       >
-        <ul className="plain-work-list" aria-label={`All ${title} items`}>
+        <ul className="plain-work-list">
           {items.map((item) => (
             <li
               key={item.slug}

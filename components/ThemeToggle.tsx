@@ -75,8 +75,7 @@ export default function ThemeToggle() {
       type="button"
       onClick={handleToggle}
       className="glass-control theme-toggle"
-      aria-label={`Switch to ${nextLabel.toLowerCase()} colour theme (currently ${theme})`}
-      aria-pressed={theme === 'light'}
+      aria-label={`Theme: ${theme === 'dark' ? 'Dark' : 'Light'} (switch to ${nextLabel.toLowerCase()} mode)`}
     >
       Theme: {theme === 'dark' ? 'Dark' : 'Light'}
     </button>

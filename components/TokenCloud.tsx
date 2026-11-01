@@ -23,6 +23,7 @@ const TOKENS = [
 const FPS_CAP = 30;
 const FRAME_INTERVAL_MS = 1000 / FPS_CAP;
 const ALPHA_BUCKETS = [0.06, 0.09, 0.13, 0.17, 0.21, 0.25] as const;
+const BUCKET_COUNT = ALPHA_BUCKETS.length;
 
 interface SpriteCell {
   sx: number;
@@ -40,8 +41,9 @@ interface CloudParticle {
   orbitSpeed: number; // rad/s calibrated for ~12-18 px/s drift
   wobblePhase: number;
   wobbleFreq: number;
-  radialPhase: number;
-  baseAlpha: number;
+  cosRadialDiff: number;
+  sinRadialDiff: number;
+  bucketIdx: number;
 }
 
 function createSeededRandom(seed: number) {
@@ -62,7 +64,8 @@ export default function TokenCloud() {
     let startRaf2: number | null = null;
 
     let isOnScreen = true;
-    let isTabVisible = typeof document !== 'undefined' ? !document.hidden : true;
+    let isTabVisible =
+      typeof document !== 'undefined' ? !document.hidden : true;
     let prefersReducedMotion = false;
     let isModalOpen =
       typeof document !== 'undefined'
@@ -78,6 +81,12 @@ export default function TokenCloud() {
     let atlasCanvas: HTMLCanvasElement | null = null;
     let spriteCells: SpriteCell[] = [];
     let particles: CloudParticle[] = [];
+
+    // Pre-allocated typed buffers per alpha bucket so renderCloudFrame allocates 0 objects per frame
+    const bucketCounts = new Int32Array(BUCKET_COUNT);
+    let bucketTokenIndices: Int16Array[] = [];
+    let bucketDrawX: Float32Array[] = [];
+    let bucketDrawY: Float32Array[] = [];
 
     let simTimeSec = 0;
     let lastTimestamp = 0;
@@ -204,19 +213,45 @@ export default function TokenCloud() {
         const edgeFade = Math.max(0.2, 1 - rNorm * 0.78);
         const baseAlpha = (0.07 + rand() * 0.17) * edgeFade;
 
+        const wobblePhase = rand() * Math.PI * 2;
+        const wobbleFreq = 0.18 + rand() * 0.22;
+        const radialPhase = rand() * Math.PI * 2;
+        const phaseDiff = radialPhase - wobblePhase;
+
+        let bucketIdx = Math.floor(
+          ((baseAlpha - 0.05) / 0.21) * BUCKET_COUNT
+        );
+        if (bucketIdx < 0) bucketIdx = 0;
+        if (bucketIdx >= BUCKET_COUNT) {
+          bucketIdx = BUCKET_COUNT - 1;
+        }
+
         nextParticles.push({
           tokenIndex: i % TOKENS.length,
           baseAngle: angle,
           baseRadiusNorm: rNorm,
           orbitSpeed,
-          wobblePhase: rand() * Math.PI * 2,
-          wobbleFreq: 0.18 + rand() * 0.22,
-          radialPhase: rand() * Math.PI * 2,
-          baseAlpha,
+          wobblePhase,
+          wobbleFreq,
+          cosRadialDiff: Math.cos(phaseDiff),
+          sinRadialDiff: Math.sin(phaseDiff),
+          bucketIdx,
         });
       }
 
       particles = nextParticles;
+      bucketTokenIndices = Array.from(
+        { length: BUCKET_COUNT },
+        () => new Int16Array(targetCount)
+      );
+      bucketDrawX = Array.from(
+        { length: BUCKET_COUNT },
+        () => new Float32Array(targetCount)
+      );
+      bucketDrawY = Array.from(
+        { length: BUCKET_COUNT },
+        () => new Float32Array(targetCount)
+      );
     };
 
     const renderCloudFrame = (timeSec: number) => {
@@ -244,65 +279,83 @@ export default function TokenCloud() {
       const cosTilt = Math.cos(cloudTilt);
       const sinTilt = Math.sin(cloudTilt);
 
-      // Bucket draw calls by opacity to minimize Canvas state changes
-      const buckets: Array<Array<{ cell: SpriteCell; x: number; y: number }>> =
-        ALPHA_BUCKETS.map(() => []);
+      // Precompute frame-level phase trig so per-particle loop uses angle identities
+      const phaseA = timeSec * 0.17;
+      const cosPhaseA = Math.cos(phaseA);
+      const sinPhaseA = Math.sin(phaseA);
 
-      for (let i = 0; i < particles.length; i++) {
+      const phaseB = timeSec * 0.13;
+      const cosPhaseB = Math.cos(phaseB);
+      const sinPhaseB = Math.sin(phaseB);
+
+      bucketCounts.fill(0);
+
+      const particleCount = particles.length;
+      for (let i = 0; i < particleCount; i++) {
         const p = particles[i];
         const theta = p.baseAngle + timeSec * p.orbitSpeed;
+        const cosTheta = Math.cos(theta);
+        const sinTheta = Math.sin(theta);
 
-        // Organic lobe modulation so the single cloud slowly changes shape
-        const lobeDeform =
-          1 +
-          morphA * Math.cos(2 * theta + timeSec * 0.17) +
-          morphB * Math.sin(3 * theta - timeSec * 0.13);
+        // Angle identities: cos(2θ), sin(2θ), cos(3θ), sin(3θ)
+        const cos2Theta = 2 * cosTheta * cosTheta - 1;
+        const sin2Theta = 2 * sinTheta * cosTheta;
+        const sin3Theta = sin2Theta * cosTheta + cos2Theta * sinTheta;
+        const cos3Theta = cos2Theta * cosTheta - sin2Theta * sinTheta;
 
-        const radialBreath =
-          1 + 0.08 * Math.sin(timeSec * p.wobbleFreq + p.radialPhase);
+        // cos(2θ + phaseA) and sin(3θ - phaseB)
+        const cosLobeA = cos2Theta * cosPhaseA - sin2Theta * sinPhaseA;
+        const sinLobeB = sin3Theta * cosPhaseB - cos3Theta * sinPhaseB;
+
+        const lobeDeform = 1 + morphA * cosLobeA + morphB * sinLobeB;
+
+        const wobbleAngle = timeSec * p.wobbleFreq + p.wobblePhase;
+        const cosWobble = Math.cos(wobbleAngle);
+        const sinWobble = Math.sin(wobbleAngle);
+
+        // sin(wobbleAngle + phaseDiff)
+        const sinRadial =
+          sinWobble * p.cosRadialDiff + cosWobble * p.sinRadialDiff;
+        const radialBreath = 1 + 0.08 * sinRadial;
 
         const r = p.baseRadiusNorm * heartbeat * lobeDeform * radialBreath;
 
-        const localX = Math.cos(theta) * rxBase * r;
-        const localY = Math.sin(theta) * ryBase * r;
+        const localX = cosTheta * rxBase * r;
+        const localY = sinTheta * ryBase * r;
 
-        // Apply subtle cloud tilt + gentle local drift
-        const driftX = Math.cos(timeSec * p.wobbleFreq + p.wobblePhase) * 9;
-        const driftY = Math.sin(timeSec * p.wobbleFreq + p.wobblePhase) * 9;
+        const driftX = cosWobble * 9;
+        const driftY = sinWobble * 9;
 
         const x = cx + localX * cosTilt - localY * sinTilt + driftX;
         const y = cy + localX * sinTilt + localY * cosTilt + driftY;
 
         const cell = spriteCells[p.tokenIndex];
-        const drawX = x - cell.drawW * 0.5;
-        const drawY = y - cell.drawH * 0.5;
-
-        // Map particle alpha to nearest bucket
-        let bucketIdx = Math.floor(
-          ((p.baseAlpha - 0.05) / 0.21) * ALPHA_BUCKETS.length
-        );
-        if (bucketIdx < 0) bucketIdx = 0;
-        if (bucketIdx >= ALPHA_BUCKETS.length) {
-          bucketIdx = ALPHA_BUCKETS.length - 1;
-        }
-
-        buckets[bucketIdx].push({ cell, x: drawX, y: drawY });
+        const bIdx = p.bucketIdx;
+        const slot = bucketCounts[bIdx];
+        bucketTokenIndices[bIdx][slot] = p.tokenIndex;
+        bucketDrawX[bIdx][slot] = x - cell.drawW * 0.5;
+        bucketDrawY[bIdx][slot] = y - cell.drawH * 0.5;
+        bucketCounts[bIdx] = slot + 1;
       }
 
-      for (let b = 0; b < ALPHA_BUCKETS.length; b++) {
-        const items = buckets[b];
-        if (items.length === 0) continue;
+      for (let b = 0; b < BUCKET_COUNT; b++) {
+        const count = bucketCounts[b];
+        if (count === 0) continue;
         ctx.globalAlpha = ALPHA_BUCKETS[b];
-        for (let j = 0; j < items.length; j++) {
-          const { cell, x, y } = items[j];
+        const indices = bucketTokenIndices[b];
+        const xs = bucketDrawX[b];
+        const ys = bucketDrawY[b];
+
+        for (let j = 0; j < count; j++) {
+          const cell = spriteCells[indices[j]];
           ctx.drawImage(
             atlasCanvas,
             cell.sx,
             cell.sy,
             cell.sw,
             cell.sh,
-            x,
-            y,
+            xs[j],
+            ys[j],
             cell.drawW,
             cell.drawH
           );
@@ -368,7 +421,8 @@ export default function TokenCloud() {
       const rect = parent.getBoundingClientRect();
       const nextWidth = Math.max(1, Math.floor(rect.width));
       const nextHeight = Math.max(1, Math.floor(rect.height));
-      const nextDpr = Math.min(window.devicePixelRatio || 1, 2);
+      const maxDpr = nextWidth < 768 ? 1.5 : 2;
+      const nextDpr = Math.min(window.devicePixelRatio || 1, maxDpr);
 
       const sizeChanged = nextWidth !== width || nextHeight !== height;
       const dprChanged = nextDpr !== dpr;
@@ -424,17 +478,29 @@ export default function TokenCloud() {
             '(prefers-reduced-motion: reduce)'
           );
           prefersReducedMotion = reducedMotionMedia.matches;
-          reducedMotionMedia.addEventListener('change', handleReducedMotionChange);
+          reducedMotionMedia.addEventListener(
+            'change',
+            handleReducedMotionChange
+          );
 
-          colorSchemeMedia = window.matchMedia('(prefers-color-scheme: light)');
-          colorSchemeMedia.addEventListener('change', handleRootAttributeChange);
+          colorSchemeMedia = window.matchMedia(
+            '(prefers-color-scheme: light)'
+          );
+          colorSchemeMedia.addEventListener(
+            'change',
+            handleRootAttributeChange
+          );
         }
 
         isModalOpen =
           document.documentElement.hasAttribute('data-modal-open');
         handleResize();
 
-        if (typeof document !== 'undefined' && 'fonts' in document && document.fonts?.ready) {
+        if (
+          typeof document !== 'undefined' &&
+          'fonts' in document &&
+          document.fonts?.ready
+        ) {
           document.fonts.ready.then(() => {
             if (isDisposed || width === 0 || height === 0) return;
             buildSpriteAtlas();
@@ -479,10 +545,16 @@ export default function TokenCloud() {
       if (intersectionObserver) intersectionObserver.disconnect();
       if (mutationObserver) mutationObserver.disconnect();
       if (reducedMotionMedia) {
-        reducedMotionMedia.removeEventListener('change', handleReducedMotionChange);
+        reducedMotionMedia.removeEventListener(
+          'change',
+          handleReducedMotionChange
+        );
       }
       if (colorSchemeMedia) {
-        colorSchemeMedia.removeEventListener('change', handleRootAttributeChange);
+        colorSchemeMedia.removeEventListener(
+          'change',
+          handleRootAttributeChange
+        );
       }
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('visibilitychange', handleVisibilityChange);

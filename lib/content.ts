@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+export { SITE_URL } from './site-url';
 
 export type WorkKind = 'project' | 'research';
 export type WorkLevel = 'full' | 'short';
