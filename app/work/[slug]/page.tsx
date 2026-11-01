@@ -11,7 +11,7 @@ import {
   getFullWorkItems,
   getFullWorkItemBySlug,
 } from '@/lib/content';
-import { renderFullWorkBodies } from '@/lib/markdown';
+import { renderWorkBodies } from '@/lib/markdown';
 
 export const dynamicParams = false;
 
@@ -89,7 +89,7 @@ export default async function WorkItemPage({
   const researchItems = getVisibleItemsByKind('research');
   const projectItems = getVisibleItemsByKind('project');
   const stack = getStackConfig();
-  const renderedBodies = renderFullWorkBodies([
+  const renderedBodies = renderWorkBodies([
     ...researchItems,
     ...projectItems,
   ]);

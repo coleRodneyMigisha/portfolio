@@ -709,30 +709,43 @@ export default function PortfolioView({
               )}
 
               {modalState.mode === 'window' ? (
-                <div className="work-dialog-actions">
-                  {activeItem.level === 'full' && (
-                    <a
-                      href={`/work/${activeItem.slug}`}
-                      className="glass-control work-full-story-cta"
-                      onClick={(e) => handleExpandToBubble(e, activeItem)}
-                    >
-                      Read the full story
-                    </a>
-                  )}
+                <>
+                  {activeItem.level === 'short' &&
+                    activeItem.body.trim().length > 0 &&
+                    activeItem.body.trim() !== activeItem.summary.trim() && (
+                      <div className="case-study-prose work-bubble-markdown">
+                        {renderedBodies[activeItem.slug]}
+                      </div>
+                    )}
 
-                  {activeItem.links.map((link) => (
-                    <a
-                      key={link.url}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="glass-control"
-                    >
-                      {link.label}
-                      <span className="sr-only"> (opens in a new tab)</span>
-                    </a>
-                  ))}
-                </div>
+                  {(activeItem.level === 'full' ||
+                    activeItem.links.length > 0) && (
+                    <div className="work-dialog-actions">
+                      {activeItem.level === 'full' && (
+                        <a
+                          href={`/work/${activeItem.slug}`}
+                          className="glass-control work-full-story-cta"
+                          onClick={(e) => handleExpandToBubble(e, activeItem)}
+                        >
+                          Read the full story
+                        </a>
+                      )}
+
+                      {activeItem.links.map((link) => (
+                        <a
+                          key={link.url}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="glass-control"
+                        >
+                          {link.label}
+                          <span className="sr-only"> (opens in a new tab)</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <div className="work-bubble-divider" />

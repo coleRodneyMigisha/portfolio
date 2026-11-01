@@ -8,7 +8,7 @@ import {
   getAboutContent,
   getVisibleItemsByKind,
 } from '@/lib/content';
-import { renderFullWorkBodies } from '@/lib/markdown';
+import { renderWorkBodies } from '@/lib/markdown';
 
 const site = getSiteConfig();
 const ogImageUrl = `${SITE_URL}/og-image.png`;
@@ -48,7 +48,7 @@ export default function HomePage() {
   const researchItems = getVisibleItemsByKind('research');
   const projectItems = getVisibleItemsByKind('project');
   const stack = getStackConfig();
-  const renderedBodies = renderFullWorkBodies([
+  const renderedBodies = renderWorkBodies([
     ...researchItems,
     ...projectItems,
   ]);
