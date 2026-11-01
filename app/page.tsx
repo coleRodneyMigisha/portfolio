@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import TopNav from '@/components/TopNav';
 import TokenCloud from '@/components/TokenCloud';
 import WorkBand from '@/components/WorkBand';
 import ScrollReveal from '@/components/ScrollReveal';
@@ -29,12 +30,7 @@ export default function HomePage() {
           <Link href="/" className="brand-mark">
             {site.name}
           </Link>
-          <nav className="site-nav" aria-label="Primary navigation">
-            <a href="#about">About Me</a>
-            <a href="#research">Research</a>
-            <a href="#projects">Projects</a>
-            <a href="#stack">Technology</a>
-          </nav>
+          <TopNav />
           <ThemeToggle />
         </div>
       </header>

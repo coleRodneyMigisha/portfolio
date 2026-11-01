@@ -23,7 +23,7 @@ function BandCard({
   isClone: boolean;
 }) {
   return (
-    <li className="band-card">
+    <li className="band-card glass-surface-no-blur">
       <div className="band-card-top">
         <span className="band-card-group">{item.group}</span>
         <span className="band-card-status">
@@ -133,7 +133,7 @@ export default function WorkBand({
           <div className="band-controls">
             <button
               type="button"
-              className="band-pause-btn"
+              className="glass-control band-pause-btn"
               onClick={() => setIsPaused((prev) => !prev)}
               aria-pressed={isPaused}
               aria-label={
@@ -145,7 +145,7 @@ export default function WorkBand({
 
             <a
               href={`#${id}-all`}
-              className="band-view-all-link"
+              className="glass-control band-view-all-link"
               onClick={handleViewAllClick}
               aria-expanded={showAll}
               aria-controls={`${id}-all`}

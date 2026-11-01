@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import Markdown from 'react-markdown';
 import ThemeToggle from '@/components/ThemeToggle';
+import TopNav from '@/components/TopNav';
 import { getSiteConfig, getFullWorkItems, getFullWorkItemBySlug } from '@/lib/content';
 
 export const dynamicParams = false;
@@ -33,6 +34,9 @@ export default async function WorkItemPage({
           <Link href="/" className="brand-mark">
             {site.name}
           </Link>
+          <TopNav
+            staticActiveId={item.kind === 'research' ? 'research' : 'projects'}
+          />
           <ThemeToggle />
         </div>
       </header>
