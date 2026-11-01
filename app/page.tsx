@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import TokenCloud from '@/components/TokenCloud';
 import {
   getSiteConfig,
   getVisibleSiteLinks,
@@ -88,31 +89,20 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="site-shell">
-        {/* 1. Landing */}
-        <section id="landing" className="page-section" aria-labelledby="hero-heading">
-          <h1 id="hero-heading" className="hero-name">
-            {site.name}
-          </h1>
-          <p className="hero-tagline">{site.tagline}</p>
-          {visibleSiteLinks.length > 0 && (
-            <ul className="inline-link-list" aria-label="Profile links">
-              {visibleSiteLinks.map((link) => (
-                <li key={link.key}>
-                  <a
-                    href={link.href}
-                    target={link.key === 'email' ? undefined : '_blank'}
-                    rel={link.key === 'email' ? undefined : 'noopener noreferrer'}
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
+      <main>
+        {/* 1. Landing (Full-viewport screen) */}
+        <section id="landing" className="landing-section" aria-labelledby="hero-heading">
+          <TokenCloud />
+          <div className="landing-content">
+            <h1 id="hero-heading" className="hero-name">
+              {site.name}
+            </h1>
+            <p className="hero-tagline">{site.tagline}</p>
+          </div>
         </section>
 
-        {/* 2. About Me */}
+        <div className="site-shell">
+          {/* 2. About Me */}
         <section id="about" className="page-section" aria-labelledby="about-heading">
           <div className="section-header">
             <h2 id="about-heading" className="section-title">
@@ -221,6 +211,7 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+        </div>
       </main>
 
       {/* 6. Footer */}

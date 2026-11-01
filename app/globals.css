@@ -25,7 +25,7 @@ html[data-theme="dark"] {
   --text-lg: 1.125rem;
   --text-xl: 1.375rem;
   --text-section: clamp(2rem, 4vw, 3rem);
-  --text-hero: clamp(2.75rem, 7vw, 5.25rem);
+  --text-hero: clamp(4rem, 15vw, 13rem);
   --leading-body: 1.7;
   --leading-heading: 1.12;
   --measure-case-study: 68ch;
@@ -236,17 +236,60 @@ a:hover {
   font-size: var(--text-section);
 }
 
+.landing-section {
+  position: relative;
+  min-height: calc(100vh - 3.75rem);
+  min-height: calc(100svh - 3.75rem);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-block: var(--section-space);
+  padding-inline: var(--gutter);
+  border-bottom: 1px solid var(--edge);
+  overflow: hidden;
+}
+
+.token-cloud-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.landing-content {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--container-max);
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .hero-name {
+  font-family: var(--font-display);
   font-size: var(--text-hero);
-  margin-bottom: var(--tight-space);
+  line-height: 0.95;
+  text-align: center;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  margin-bottom: var(--item-space);
 }
 
 .hero-tagline {
   font-size: var(--text-lg);
   color: var(--muted);
+  text-align: center;
   max-width: var(--measure-case-study);
   margin-top: 0;
-  margin-bottom: var(--block-space);
+  margin-bottom: 0;
 }
 
 .inline-link-list {
