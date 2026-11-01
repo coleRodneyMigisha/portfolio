@@ -52,6 +52,11 @@ export const metadata: Metadata = {
     description: site.tagline,
     images: [ogImageUrl],
   },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+  },
 };
 
 const sameAsLinks = [
@@ -89,6 +94,11 @@ const themeInitScript = `
   document.documentElement.setAttribute('data-theme', theme);
   document.documentElement.classList.toggle('dark', theme === 'dark');
   document.documentElement.classList.toggle('light', theme === 'light');
+  var iconHref = theme === 'light' ? '/favicon-light.svg' : '/favicon-dark.svg';
+  var icons = document.querySelectorAll('link[rel*="icon"]');
+  for (var i = 0; i < icons.length; i++) {
+    icons[i].setAttribute('href', iconHref);
+  }
 })();
 `;
 
@@ -101,6 +111,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <head>
+        <link id="site-favicon" rel="icon" type="image/svg+xml" href="/favicon-dark.svg" />
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
           type="application/ld+json"

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="crm">
+  <text
+    x="3"
+    y="42"
+    fill="#151D19"
+    font-family="'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+    font-size="27"
+    font-weight="600"
+    letter-spacing="-0.5"
+  >crm</text>
+  <rect x="53" y="21" width="5" height="24" rx="1" fill="#C79A5B" />
+</svg>

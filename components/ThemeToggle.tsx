@@ -32,6 +32,12 @@ function applyThemeToDocument(theme: Theme) {
   root.setAttribute('data-theme', theme);
   root.classList.toggle('dark', theme === 'dark');
   root.classList.toggle('light', theme === 'light');
+
+  const iconHref = theme === 'light' ? '/favicon-light.svg' : '/favicon-dark.svg';
+  const iconLinks = document.querySelectorAll<HTMLLinkElement>('link[rel*="icon"]');
+  iconLinks.forEach((link) => {
+    link.href = iconHref;
+  });
 }
 
 export default function ThemeToggle() {
