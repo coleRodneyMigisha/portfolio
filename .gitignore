@@ -1,3 +1,4 @@
+
 node_modules/
 .next/
 out/
@@ -5,3 +6,5 @@ coverage/
 .DS_Store
 *.log
 .env*
+bun.lock
+bun.lockb
