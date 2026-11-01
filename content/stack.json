@@ -1,21 +1,48 @@
 {
   "confident": [
     "Python",
+    "PyTorch",
+    "pandas",
+    "NumPy",
+    "scikit-learn",
+    "LightGBM",
+    "OpenCV",
+    "FastAPI",
     "SQL",
-    "TypeScript",
     "Git",
-    "Linux"
+    "Inkscape",
+    "Figma",
+    "Illustrator",
+    "Canva"
   ],
   "used": [
-    "Next.js",
+    "JavaScript",
     "React",
-    "PostgreSQL",
-    "Docker",
-    "Bash"
+    "TypeScript",
+    "Node.js",
+    "Express",
+    "Django",
+    "Flask",
+    "Java",
+    "Oracle",
+    "MySQL",
+    "C",
+    "C++",
+    "Spark",
+    "Airflow",
+    "pytest",
+    "Evidently",
+    "PySide6",
+    "Blender",
+    "Arduino",
+    "DuckDB",
+    "Parquet",
+    "TensorFlow"
   ],
   "learning": [
-    "Apache Airflow",
-    "dbt",
-    "Data Pipeline Orchestration"
+    "Cloud deployment",
+    "Docker",
+    "MLflow",
+    "Qt/C++ desktop work"
   ]
 }
