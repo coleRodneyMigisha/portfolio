@@ -139,11 +139,17 @@ export default function PortfolioView({
   const restoreFocusToTrigger = useCallback(() => {
     const slug = lastOpenedSlugRef.current;
     window.requestAnimationFrame(() => {
+      const savedTrigger = triggerElementRef.current;
+      const nonHiddenTrigger =
+        savedTrigger && !savedTrigger.closest('[aria-hidden="true"]')
+          ? savedTrigger
+          : null;
+
       const triggerEl =
-        triggerElementRef.current ??
+        nonHiddenTrigger ??
         (slug
           ? document.querySelector<HTMLElement>(
-              `.band-set:not(.band-set-clone) a[href="/work/${slug}"]`
+              `.band-set:not(.band-set-clone) [data-work-slug="${slug}"]`
             )
           : null) ??
         document.getElementById('main-content');

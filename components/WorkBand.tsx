@@ -63,6 +63,7 @@ function BandCard({
           <a
             ref={triggerRef}
             href={`/work/${item.slug}`}
+            data-work-slug={item.slug}
             className="band-card-link"
             tabIndex={isClone ? -1 : undefined}
             onClick={(e) => {
@@ -78,6 +79,7 @@ function BandCard({
           <button
             ref={triggerRef}
             type="button"
+            data-work-slug={item.slug}
             className="band-card-link band-card-btn"
             tabIndex={isClone ? -1 : undefined}
             onClick={(e) => onOpenWindow(item, e.currentTarget)}
@@ -219,13 +221,12 @@ export default function WorkBand({
             ))}
           </ul>
 
-          {/* Seamless loop sets for desktop drift */}
+          {/* Seamless loop sets for continuous drift */}
           {CLONE_SET_INDICES.map((cloneIndex) => (
             <ul
               key={cloneIndex}
               className="band-set band-set-clone"
               aria-hidden="true"
-              inert
             >
               {items.map((item) => (
                 <BandCard
