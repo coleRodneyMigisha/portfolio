@@ -194,6 +194,7 @@ export default function WorkBand({
       {/* Full-width floating band outside the page's content container */}
       <div
         className="band-viewport"
+        role="region"
         data-reveal
         data-reveal-index={1}
         data-direction={direction}

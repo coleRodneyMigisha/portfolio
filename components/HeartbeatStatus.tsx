@@ -10,12 +10,11 @@ export interface HeartbeatPayload {
 }
 
 const STORAGE_KEY = 'cole-portfolio-heartbeat-good';
-// Treat data older than 7 days as stale
-const MAX_STALE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+// Treat data older than 24 hours as stale
+const MAX_STALE_AGE_MS = 24 * 60 * 60 * 1000;
 
 const REMOTE_DATA_URLS = [
   'https://raw.githubusercontent.com/coleRodneyMigisha/portfolio/data/heartbeat.json',
-  '/heartbeat.json',
 ];
 
 function isValidFreshPayload(raw: unknown): raw is HeartbeatPayload {

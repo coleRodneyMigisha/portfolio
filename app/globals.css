@@ -1388,7 +1388,7 @@ html[data-modal-open] .stack-marquee-track {
   width: 100%;
   height: auto;
   max-height: 24rem;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .work-dialog-actions {
