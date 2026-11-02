@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { getAge } from './age';
 export { SITE_URL } from './site-url';
 
 export type WorkKind = 'project' | 'research';
@@ -37,6 +38,8 @@ export interface SiteConfig {
   name: string;
   brandName: string;
   tagline: string;
+  taglineLinkText: string;
+  taglineLinkUrl: string;
   email: string;
   linkedin: string;
   github: string;
@@ -328,6 +331,8 @@ export function getSiteConfig(): SiteConfig {
     name: assertNonEmptyString(raw.name, relativeFilePath, 'name'),
     brandName: assertNonEmptyString(raw.brandName, relativeFilePath, 'brandName'),
     tagline: assertNonEmptyString(raw.tagline, relativeFilePath, 'tagline'),
+    taglineLinkText: assertStringAllowEmpty(raw.taglineLinkText, relativeFilePath, 'taglineLinkText'),
+    taglineLinkUrl: assertStringAllowEmpty(raw.taglineLinkUrl, relativeFilePath, 'taglineLinkUrl'),
     email: assertStringAllowEmpty(raw.email, relativeFilePath, 'email'),
     linkedin: assertStringAllowEmpty(raw.linkedin, relativeFilePath, 'linkedin'),
     github: assertStringAllowEmpty(raw.github, relativeFilePath, 'github'),
@@ -339,7 +344,10 @@ export function getSiteConfig(): SiteConfig {
 
 export function getVisibleSiteLinks(site: SiteConfig): Array<{ key: string; label: string; value: string; href: string }> {
   const linkDefinitions: Array<{
-    key: keyof Omit<SiteConfig, 'name' | 'brandName' | 'tagline'>;
+    key: keyof Omit<
+      SiteConfig,
+      'name' | 'brandName' | 'tagline' | 'taglineLinkText' | 'taglineLinkUrl'
+    >;
     label: string;
     isEmail?: boolean;
   }> = [
@@ -367,6 +375,7 @@ export function getVisibleSiteLinks(site: SiteConfig): Array<{ key: string; labe
 }
 
 export interface AboutContent {
+  buildAge: number;
   aboutParagraphs: string[];
   experience: string[];
   achievements: string[];
@@ -449,6 +458,7 @@ export function getAboutContent(): AboutContent {
     .filter((p) => p.length > 0);
 
   return {
+    buildAge: getAge(new Date()),
     aboutParagraphs,
     experience,
     achievements,

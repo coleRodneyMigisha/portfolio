@@ -19,6 +19,8 @@ import ScrollReveal from '@/components/ScrollReveal';
 import HeartbeatStatus from '@/components/HeartbeatStatus';
 import HeavenSnippet from '@/components/HeavenSnippet';
 import CopyrightLine from '@/components/CopyrightLine';
+import Age from '@/components/Age';
+import { LeetCodeIcon, ZindiIcon } from '@/components/BrandIcons';
 import { SITE_URL } from '@/lib/site-url';
 import type {
   AboutContent,
@@ -76,14 +78,46 @@ function updateCanonicalLink(href: string): void {
   }
 }
 
+// The tagline stays plain text for metadata, so its link is added only here
+function renderTagline(site: SiteConfig): ReactNode {
+  const { tagline, taglineLinkText, taglineLinkUrl } = site;
+  const linkIndex = taglineLinkText ? tagline.indexOf(taglineLinkText) : -1;
+  if (linkIndex === -1 || !taglineLinkUrl) return tagline;
+
+  return (
+    <>
+      {tagline.slice(0, linkIndex)}
+      <a href={taglineLinkUrl} target="_blank" rel="noopener noreferrer">
+        {taglineLinkText}
+        <span className="sr-only"> (opens in a new tab)</span>
+      </a>
+      {tagline.slice(linkIndex + taglineLinkText.length)}
+    </>
+  );
+}
+
+// "{age}" in content/about.md stays current without editing the file
+function renderWithAge(text: string, buildAge: number): ReactNode {
+  const placeholder = '{age}';
+  const ageIndex = text.indexOf(placeholder);
+  if (ageIndex === -1) return text;
+  return (
+    <>
+      {text.slice(0, ageIndex)}
+      <Age buildAge={buildAge} />
+      {text.slice(ageIndex + placeholder.length)}
+    </>
+  );
+}
+
 // "How I work." opens its paragraph as a bold lead-in
-function renderAboutParagraph(paragraph: string): ReactNode {
+function renderAboutParagraph(paragraph: string, buildAge: number): ReactNode {
   const lead = 'How I work.';
-  if (!paragraph.startsWith(lead)) return paragraph;
+  if (!paragraph.startsWith(lead)) return renderWithAge(paragraph, buildAge);
   return (
     <>
       <strong className="about-lead">{lead}</strong>
-      {paragraph.slice(lead.length)}
+      {renderWithAge(paragraph.slice(lead.length), buildAge)}
     </>
   );
 }
@@ -129,6 +163,10 @@ function renderFooterLinkIcon(key: string, label: string): ReactNode {
           <span className="footer-cv-letters">CV</span>
         </span>
       );
+    case 'leetcode':
+      return <LeetCodeIcon className="footer-icon" />;
+    case 'zindi':
+      return <ZindiIcon className="footer-icon" />;
     default:
       return <span>{label}</span>;
   }
@@ -457,7 +495,7 @@ export default function PortfolioView({
                   </span>
                 ))}
               </h1>
-              <p className="hero-tagline">{site.tagline}</p>
+              <p className="hero-tagline">{renderTagline(site)}</p>
             </div>
           </section>
 
@@ -478,7 +516,7 @@ export default function PortfolioView({
                 <div className="case-study-prose">
                   {about.aboutParagraphs.map((paragraph, index) => (
                     <p key={index} data-reveal data-reveal-index={index}>
-                      {renderAboutParagraph(paragraph)}
+                      {renderAboutParagraph(paragraph, about.buildAge)}
                     </p>
                   ))}
                 </div>
@@ -611,7 +649,9 @@ export default function PortfolioView({
                       link.key === 'email' ||
                       link.key === 'linkedin' ||
                       link.key === 'github' ||
-                      link.key === 'cv';
+                      link.key === 'cv' ||
+                      link.key === 'leetcode' ||
+                      link.key === 'zindi';
 
                     return (
                       <li key={link.key}>

@@ -73,7 +73,7 @@ No code needed:
 
 The card, window and page build themselves. `level: "full"` gives an item its own page at `/work/your-slug`, and `level: "short"` keeps it in a window. The build checks every field and tells you which file to fix if something is missing.
 
-To change the site's profile details, edit `content/site.json`. Leave a field empty to hide it. Tools live in `content/stack.json`. The words typed out in the footer live in `content/heaven-words.json`.
+To change the site's profile details, edit `content/site.json`. Leave a field empty to hide it. `taglineLinkText` and `taglineLinkUrl` turn a word in the tagline into a link. In `content/about.md`, `{age}` shows the current age, which changes each 27 May. Tools live in `content/stack.json`. The words typed out in the footer live in `content/heaven-words.json`.
 
 ## License and reuse
 

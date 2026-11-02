@@ -532,6 +532,11 @@ section[id] {
   margin-bottom: 0;
 }
 
+.hero-tagline a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
 .inline-link-list {
   display: flex;
   flex-wrap: wrap;
