@@ -88,7 +88,7 @@ function renderAboutParagraph(paragraph: string): ReactNode {
   );
 }
 
-// Everything before the first comma is the entry's title
+// Everything before the first comma is the entry's title, on a line of its own
 function renderAboutEntry(entry: string): ReactNode {
   const commaIndex = entry.indexOf(',');
   if (commaIndex === -1) {
@@ -97,7 +97,9 @@ function renderAboutEntry(entry: string): ReactNode {
   return (
     <>
       <strong className="about-entry-title">{entry.slice(0, commaIndex)}</strong>
-      {entry.slice(commaIndex)}
+      <span className="about-entry-detail">
+        {entry.slice(commaIndex + 1).trim()}
+      </span>
     </>
   );
 }
@@ -176,9 +178,11 @@ export default function PortfolioView({
       const triggerEl =
         nonHiddenTrigger ??
         (slug
-          ? document.querySelector<HTMLElement>(
-              `.band-set:not(.band-set-clone) [data-work-slug="${slug}"]`
-            )
+          ? Array.from(
+              document.querySelectorAll<HTMLElement>(
+                `.band-set:not(.band-set-clone) [data-work-slug="${slug}"], .band-grid [data-work-slug="${slug}"]`
+              )
+            ).find((el) => el.offsetParent !== null)
           : null) ??
         document.getElementById('main-content');
 

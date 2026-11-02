@@ -650,18 +650,30 @@ section[id] {
   margin-bottom: 0;
 }
 
+/* JetBrains Mono's bold keeps the same letter widths as its regular weight, so
+   headings are told apart by typeface, colour and position rather than weight */
 .about-subsection-title {
-  font-family: var(--font-mono-stack);
-  font-weight: 700;
-  font-size: 1.25rem;
-  margin-bottom: var(--tight-space);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.875rem;
+  line-height: var(--leading-heading);
+  margin-bottom: var(--item-space);
   color: var(--text);
 }
 
 .about-entry-title,
 .about-lead {
   font-weight: 700;
-  color: var(--text);
+  color: var(--accent);
+}
+
+.about-entry-title {
+  display: block;
+}
+
+.about-entry-detail {
+  display: block;
+  color: var(--muted);
 }
 
 .clean-list {
@@ -752,6 +764,13 @@ section[id] {
   outline-offset: -2px;
 }
 
+/* Sideways swipes belong to the band; up and down still scroll the page */
+@media (prefers-reduced-motion: no-preference) {
+  .band-viewport {
+    touch-action: pan-y;
+  }
+}
+
 .band-track {
   display: flex;
   width: max-content;
@@ -832,12 +851,14 @@ section[id] {
   box-shadow: var(--glass-box-shadow-hover);
 }
 
-/* Pause band and heartbeat on hover (pointer devices), keyboard focus, active touch hold, or pause button */
+/* Pause band and heartbeat on hover (pointer devices), keyboard focus, active touch hold, swipe, or pause button */
 .band-viewport:has(:focus-visible) .band-track,
 .band-viewport:active .band-track,
+.band-viewport[data-swiping] .band-track,
 .band-viewport[data-paused="true"] .band-track,
 .band-viewport:has(:focus-visible) .band-card,
 .band-viewport:active .band-card,
+.band-viewport[data-swiping] .band-card,
 .band-viewport[data-paused="true"] .band-card {
   animation-play-state: paused;
 }
@@ -866,6 +887,7 @@ section[id] {
 
 .band-card-title {
   font-family: var(--font-display);
+  font-weight: 400;
   font-size: 1.75rem;
   line-height: 1.15;
   margin: 0;
@@ -900,66 +922,19 @@ section[id] {
   margin: 0;
 }
 
-.work-summary {
-  color: var(--text);
-  margin: 0;
-  max-width: var(--measure-case-study);
-}
-
 .work-tags {
   color: var(--muted);
   margin: 0;
 }
 
-/* Plain list view ("View all") */
-.band-all-wrapper {
-  margin-top: var(--block-space);
-}
-
-.plain-work-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
+/* "View all": the same cards, holding still in a grid */
+.band-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
   gap: var(--item-space);
-  border-top: 1px solid var(--edge);
-  padding-top: var(--block-space);
-}
-
-.plain-work-item {
-  padding-bottom: var(--item-space);
-  border-bottom: 1px solid var(--edge);
-}
-
-.plain-work-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.plain-work-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem var(--item-space);
-  margin-bottom: 0.375rem;
-}
-
-.plain-work-title {
-  font-family: var(--font-display);
-  font-size: 1.625rem;
+  list-style: none;
   margin: 0;
-}
-
-.plain-work-title a {
-  text-decoration: none;
-  color: var(--text);
-}
-
-.plain-work-title a:hover {
-  color: var(--accent);
-  text-decoration: underline;
+  padding: 0;
 }
 
 /* Keep cards comfortably sized on narrow phone viewports while drifting */
@@ -968,6 +943,12 @@ section[id] {
     width: min(84vw, var(--band-card-width));
     flex: 0 0 min(84vw, var(--band-card-width));
   }
+}
+
+.band-grid .band-card {
+  width: auto;
+  flex: none;
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1294,13 +1275,12 @@ html[data-reveal-ready="true"] [data-reveal][data-revealed="true"] {
   }
 }
 
-/* Interactive Card Buttons (Short items in bands and View all list) */
+/* Interactive Card Buttons (Short items in bands and the View all grid) */
 .band-card {
   cursor: pointer;
 }
 
-.band-card-btn,
-.plain-work-btn {
+.band-card-btn {
   appearance: none;
   background: none;
   border: none;
@@ -1313,15 +1293,9 @@ html[data-reveal-ready="true"] [data-reveal][data-revealed="true"] {
 }
 
 .band-card-btn:hover,
-.band-card-btn:focus-visible,
-.plain-work-btn:hover,
-.plain-work-btn:focus-visible {
+.band-card-btn:focus-visible {
   color: var(--accent);
   text-decoration: underline;
-}
-
-.plain-work-item {
-  cursor: pointer;
 }
 
 /* Hidden SVG defs container */
@@ -1564,7 +1538,8 @@ html[data-modal-open] .stack-marquee-track {
 
 .work-bubble-markdown h4 {
   font-family: var(--font-mono-stack);
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--accent);
   font-size: var(--text-lg);
   line-height: 1.4;
   margin-top: var(--item-space);

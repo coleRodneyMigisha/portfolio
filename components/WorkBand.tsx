@@ -18,6 +18,10 @@ const SLOW_DOWN_MS = 500;
 const MAX_TILT_DEG = 5;
 const FALLBACK_CARD_SLOT_PX = 384; // 360px card + 24px gap
 const CLONE_SET_INDICES = [1, 2, 3] as const;
+const SWIPE_START_PX = 6;
+const SWIPE_GLIDE_MS = 325; // How quickly a released swipe loses speed
+const SWIPE_MIN_SPEED_PX_PER_MS = 0.02;
+const SWIPE_RELEASE_WINDOW_MS = 100; // A finger held still before lifting doesn't glide
 
 function isPlainLeftClick(e: React.MouseEvent<HTMLAnchorElement>): boolean {
   return (
@@ -121,6 +125,7 @@ export default function WorkBand({
   const firstSetRef = useRef<HTMLUListElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
+  const gridRef = useRef<HTMLUListElement | null>(null);
 
   const fallbackDurationSec = Math.max(
     20,
@@ -172,7 +177,8 @@ export default function WorkBand({
   useEffect(() => {
     const viewportEl = viewportRef.current;
     const trackEl = trackRef.current;
-    if (!viewportEl || !trackEl) return;
+    const gridEl = gridRef.current;
+    if (!viewportEl || !trackEl || !gridEl) return;
 
     let rate = 1;
     let rampRaf: number | null = null;
@@ -242,14 +248,153 @@ export default function WorkBand({
     viewportEl.addEventListener('pointermove', handlePointerMove, {
       passive: true,
     });
+    gridEl.addEventListener('pointerleave', handlePointerLeave);
+    gridEl.addEventListener('pointermove', handlePointerMove, {
+      passive: true,
+    });
 
     return () => {
       if (rampRaf !== null) window.cancelAnimationFrame(rampRaf);
       viewportEl.removeEventListener('pointerenter', handlePointerEnter);
       viewportEl.removeEventListener('pointerleave', handlePointerLeave);
       viewportEl.removeEventListener('pointermove', handlePointerMove);
+      gridEl.removeEventListener('pointerleave', handlePointerLeave);
+      gridEl.removeEventListener('pointermove', handlePointerMove);
     };
   }, []);
+
+  // On touch screens a finger scrubs the drift animation itself, so the band
+  // can be swiped either way and still loops forever, then drifts on afterwards.
+  useEffect(() => {
+    const viewportEl = viewportRef.current;
+    const trackEl = trackRef.current;
+    if (!viewportEl || !trackEl) return;
+
+    let animation: Animation | undefined;
+    let pointerId: number | null = null;
+    let startX = 0;
+    let lastX = 0;
+    let lastMoveAt = 0;
+    let velocity = 0;
+    let hasMoved = false;
+    let glideRaf: number | null = null;
+    let swallowClick = false;
+
+    const moveBandBy = (deltaPx: number) => {
+      const loopWidth = firstSetRef.current?.getBoundingClientRect().width ?? 0;
+      const duration = Number(animation?.effect?.getComputedTiming().duration);
+      if (!animation || !loopWidth || !duration) return;
+
+      const sign = direction === 'rtl' ? -1 : 1;
+      const time =
+        Number(animation.currentTime ?? 0) +
+        (sign * deltaPx * duration) / loopWidth;
+      animation.currentTime = ((time % duration) + duration) % duration;
+    };
+
+    const finishSwipe = () => {
+      delete viewportEl.dataset.swiping;
+    };
+
+    const glide = () => {
+      let previousFrameAt = performance.now();
+      const step = (now: number) => {
+        const elapsed = now - previousFrameAt;
+        previousFrameAt = now;
+        velocity *= Math.exp(-elapsed / SWIPE_GLIDE_MS);
+        moveBandBy(velocity * elapsed);
+
+        if (Math.abs(velocity) < SWIPE_MIN_SPEED_PX_PER_MS) {
+          glideRaf = null;
+          finishSwipe();
+        } else {
+          glideRaf = window.requestAnimationFrame(step);
+        }
+      };
+      glideRaf = window.requestAnimationFrame(step);
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (event.pointerType === 'mouse' || pointerId !== null) return;
+      animation = trackEl.getAnimations()[0];
+      if (!animation) return; // Reduced motion: the band scrolls natively
+
+      // A tap that stops a gliding band shouldn't also open the card under it
+      swallowClick = glideRaf !== null;
+      if (glideRaf !== null) {
+        window.cancelAnimationFrame(glideRaf);
+        glideRaf = null;
+      }
+
+      pointerId = event.pointerId;
+      startX = lastX = event.clientX;
+      lastMoveAt = event.timeStamp;
+      velocity = 0;
+      hasMoved = false;
+      viewportEl.dataset.swiping = 'true';
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (event.pointerId !== pointerId) return;
+      if (!hasMoved) {
+        if (Math.abs(event.clientX - startX) < SWIPE_START_PX) return;
+        hasMoved = true;
+        swallowClick = true;
+      }
+
+      const deltaPx = event.clientX - lastX;
+      const elapsed = event.timeStamp - lastMoveAt;
+      moveBandBy(deltaPx);
+      if (elapsed > 0) {
+        velocity = 0.8 * (deltaPx / elapsed) + 0.2 * velocity;
+      }
+      lastX = event.clientX;
+      lastMoveAt = event.timeStamp;
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      if (event.pointerId !== pointerId) return;
+      pointerId = null;
+
+      const isFlick =
+        hasMoved &&
+        Math.abs(velocity) >= SWIPE_MIN_SPEED_PX_PER_MS &&
+        event.timeStamp - lastMoveAt < SWIPE_RELEASE_WINDOW_MS;
+      if (isFlick) glide();
+      else finishSwipe();
+    };
+
+    // The browser took the touch over for scrolling the page up or down
+    const handlePointerCancel = (event: PointerEvent) => {
+      if (event.pointerId !== pointerId) return;
+      pointerId = null;
+      finishSwipe();
+    };
+
+    const handleClickCapture = (event: MouseEvent) => {
+      if (!swallowClick) return;
+      swallowClick = false;
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    viewportEl.addEventListener('pointerdown', handlePointerDown);
+    viewportEl.addEventListener('pointermove', handlePointerMove, {
+      passive: true,
+    });
+    viewportEl.addEventListener('pointerup', handlePointerUp);
+    viewportEl.addEventListener('pointercancel', handlePointerCancel);
+    viewportEl.addEventListener('click', handleClickCapture, true);
+
+    return () => {
+      if (glideRaf !== null) window.cancelAnimationFrame(glideRaf);
+      viewportEl.removeEventListener('pointerdown', handlePointerDown);
+      viewportEl.removeEventListener('pointermove', handlePointerMove);
+      viewportEl.removeEventListener('pointerup', handlePointerUp);
+      viewportEl.removeEventListener('pointercancel', handlePointerCancel);
+      viewportEl.removeEventListener('click', handleClickCapture, true);
+    };
+  }, [direction]);
 
   const handleToggleShowAll = () => {
     setShowAll((prev) => !prev);
@@ -268,16 +413,20 @@ export default function WorkBand({
           </h2>
 
           <div className="band-controls">
-            <button
-              type="button"
-              className="glass-control band-pause-btn"
-              onClick={() => setIsPaused((prev) => !prev)}
-              aria-label={
-                isPaused ? `Resume ${title} band drift` : `Pause ${title} band drift`
-              }
-            >
-              {isPaused ? 'Resume' : 'Pause'}
-            </button>
+            {!showAll && (
+              <button
+                type="button"
+                className="glass-control band-pause-btn"
+                onClick={() => setIsPaused((prev) => !prev)}
+                aria-label={
+                  isPaused
+                    ? `Resume ${title} band drift`
+                    : `Pause ${title} band drift`
+                }
+              >
+                {isPaused ? 'Resume' : 'Pause'}
+              </button>
+            )}
 
             <button
               type="button"
@@ -286,7 +435,7 @@ export default function WorkBand({
               aria-expanded={showAll}
               aria-controls={`${id}-all`}
             >
-              {showAll ? 'Hide list' : 'View all'}
+              {showAll ? 'Hide all' : 'View all'}
               <span className="sr-only"> {title} items</span>
             </button>
           </div>
@@ -297,6 +446,7 @@ export default function WorkBand({
       <div
         ref={viewportRef}
         className="band-viewport"
+        hidden={showAll}
         role="group"
         data-reveal
         data-reveal-index={1}
@@ -345,57 +495,17 @@ export default function WorkBand({
         </div>
       </div>
 
-      {/* Plain list view toggled by "View all" — clicking any item also opens the glass window */}
-      <div
-        id={`${id}-all`}
-        className="site-shell band-all-wrapper"
-        hidden={!showAll}
-      >
-        <ul className="plain-work-list">
-          {items.map((item) => (
-            <li
+      {/* "View all" swaps the floating band for a still grid of the same cards */}
+      <div id={`${id}-all`} className="site-shell" hidden={!showAll}>
+        <ul ref={gridRef} className="band-grid">
+          {items.map((item, index) => (
+            <BandCard
               key={item.slug}
-              className="plain-work-item"
-              onClick={(e) => {
-                const target = e.target as HTMLElement;
-                if (target.closest('a, button')) return;
-                const trigger = e.currentTarget.querySelector<HTMLElement>(
-                  'a, button'
-                );
-                onOpenWindow(item, trigger);
-              }}
-            >
-              <div className="plain-work-header">
-                <h3 className="plain-work-title">
-                  {item.level === 'full' ? (
-                    <a
-                      href={`/work/${item.slug}`}
-                      onClick={(e) => {
-                        if (isPlainLeftClick(e)) {
-                          e.preventDefault();
-                          onOpenWindow(item, e.currentTarget);
-                        }
-                      }}
-                    >
-                      {item.title}
-                    </a>
-                  ) : (
-                    <button
-                      type="button"
-                      className="plain-work-btn"
-                      onClick={(e) => onOpenWindow(item, e.currentTarget)}
-                    >
-                      {item.title}
-                    </button>
-                  )}
-                </h3>
-                <span className="work-meta">
-                  {item.group} · {item.status} · {item.date}
-                  {item.team ? ' · Team project' : ''}
-                </span>
-              </div>
-              <p className="work-summary">{item.summary}</p>
-            </li>
+              item={item}
+              index={index}
+              isClone={false}
+              onOpenWindow={onOpenWindow}
+            />
           ))}
         </ul>
       </div>
