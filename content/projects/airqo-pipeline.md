@@ -14,7 +14,9 @@ date: "2026-10"
 level: "full"
 team: true
 image: ""
-links: []
+links:
+  - label: "Try the dashboard"
+    url: "https://airqo-model.vercel.app/"
 order: 3
 visible: true
 ---
