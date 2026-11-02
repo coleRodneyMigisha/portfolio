@@ -17,6 +17,8 @@ image: ""
 links:
   - label: "Try the dashboard"
     url: "https://airqo-model.vercel.app/"
+  - label: "Code"
+    url: "https://github.com/coleRodneyMigisha/airqo_cole_charis_assgnmnt"
 order: 3
 visible: true
 ---

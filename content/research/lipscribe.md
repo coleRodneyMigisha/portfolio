@@ -15,7 +15,9 @@ date: "2026-10"
 level: "full"
 team: true
 image: ""
-links: []
+links:
+  - label: "Code"
+    url: "https://github.com/coleRodneyMigisha/cv_project_LipScribe"
 order: 2
 visible: true
 ---

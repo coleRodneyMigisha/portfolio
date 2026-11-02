@@ -15,7 +15,9 @@ date: "2026-10"
 level: "full"
 team: false
 image: ""
-links: []
+links:
+  - label: "Code"
+    url: "https://github.com/coleRodneyMigisha/dsc3103-project-week-2"
 order: 1
 visible: true
 ---
