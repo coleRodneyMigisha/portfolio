@@ -932,7 +932,7 @@ section[id] {
   margin: 0;
 }
 
-/* "View all": the same cards, holding still in a grid */
+/* Card grid view */
 .band-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
@@ -953,7 +953,6 @@ section[id] {
 .band-grid .band-card {
   width: auto;
   flex: none;
-  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

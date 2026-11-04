@@ -121,7 +121,7 @@ export default function WorkBand({
   onOpenWindow,
 }: WorkBandProps) {
   const [isPaused, setIsPaused] = useState(false);
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
   const firstSetRef = useRef<HTMLUListElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -495,8 +495,14 @@ export default function WorkBand({
         </div>
       </div>
 
-      {/* "View all" swaps the floating band for a still grid of the same cards */}
-      <div id={`${id}-all`} className="site-shell" hidden={!showAll}>
+      {/* Default grid of work cards, with floating band available via toggle */}
+      <div
+        id={`${id}-all`}
+        className="site-shell"
+        hidden={!showAll}
+        data-reveal
+        data-reveal-index={1}
+      >
         <ul ref={gridRef} className="band-grid">
           {items.map((item, index) => (
             <BandCard
