@@ -15,11 +15,14 @@ import ThemeToggle from '@/components/ThemeToggle';
 import TopNav from '@/components/TopNav';
 import TokenCloud from '@/components/TokenCloud';
 import WorkBand from '@/components/WorkBand';
+import ResearchList from '@/components/ResearchList';
+import TechStackDuet from '@/components/TechStackDuet';
 import ScrollReveal from '@/components/ScrollReveal';
 import HeartbeatStatus from '@/components/HeartbeatStatus';
 import HeavenSnippet from '@/components/HeavenSnippet';
 import CopyrightLine from '@/components/CopyrightLine';
 import Age from '@/components/Age';
+import BookEgg from '@/components/BookEgg';
 import { LeetCodeIcon, ZindiIcon } from '@/components/BrandIcons';
 import { SITE_URL } from '@/lib/site-url';
 import type {
@@ -87,10 +90,7 @@ function renderTagline(site: SiteConfig): ReactNode {
   return (
     <>
       {tagline.slice(0, linkIndex)}
-      <a href={taglineLinkUrl} target="_blank" rel="noopener noreferrer">
-        {taglineLinkText}
-        <span className="sr-only"> (opens in a new tab)</span>
-      </a>
+      <BookEgg href={taglineLinkUrl}>{taglineLinkText}</BookEgg>
       {tagline.slice(linkIndex + taglineLinkText.length)}
     </>
   );
@@ -136,6 +136,19 @@ function renderAboutEntry(entry: string): ReactNode {
       </span>
     </>
   );
+}
+
+// "Role, Place, ..., Month to Month Year": the trailing dated part becomes the timeline date
+function splitExperienceEntry(entry: string): {
+  title: string;
+  detail: string;
+  date: string;
+} {
+  const parts = entry.split(',').map((part) => part.trim());
+  const title = parts.shift() ?? entry;
+  const last = parts[parts.length - 1] ?? '';
+  const date = /\b(19|20)\d{2}\b/.test(last) ? (parts.pop() ?? '') : '';
+  return { title, detail: parts.join(', '), date };
 }
 
 function renderFooterLinkIcon(key: string, label: string): ReactNode {
@@ -218,7 +231,7 @@ export default function PortfolioView({
         (slug
           ? Array.from(
               document.querySelectorAll<HTMLElement>(
-                `.band-set:not(.band-set-clone) [data-work-slug="${slug}"], .band-grid [data-work-slug="${slug}"]`
+                `.band-set:not(.band-set-clone) [data-work-slug="${slug}"], .band-grid [data-work-slug="${slug}"], .research-list [data-work-slug="${slug}"]`
               )
             ).find((el) => el.offsetParent !== null)
           : null) ??
@@ -404,15 +417,6 @@ export default function PortfolioView({
     };
   }, [activeItem, handleCloseModal, modalState.mode]);
 
-  const stackGroups = useMemo(
-    () => [
-      { label: 'Confident', items: stack.confident },
-      { label: 'Used', items: stack.used },
-      { label: 'Learning', items: stack.learning },
-    ],
-    [stack.confident, stack.learning, stack.used]
-  );
-
   const isBubbleOpen = modalState.mode === 'bubble' && activeItem !== null;
   const isWindowOpen = modalState.mode === 'window' && activeItem !== null;
 
@@ -524,19 +528,6 @@ export default function PortfolioView({
                 <div>
                   <div className="about-subsection">
                     <h3 className="about-subsection-title" data-reveal>
-                      Experience
-                    </h3>
-                    <ul className="clean-list">
-                      {about.experience.map((entry, index) => (
-                        <li key={entry} data-reveal data-reveal-index={index}>
-                          {renderAboutEntry(entry)}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="about-subsection">
-                    <h3 className="about-subsection-title" data-reveal>
                       Achievements
                     </h3>
                     <ul className="clean-list">
@@ -562,17 +553,37 @@ export default function PortfolioView({
                   </div>
                 </div>
               </div>
+
+              <div className="about-timeline-block">
+                <h3 className="about-subsection-title" data-reveal>
+                  Experience
+                </h3>
+                <ol className="about-timeline">
+                  {about.experience.map((entry, index) => {
+                    const { title, detail, date } = splitExperienceEntry(entry);
+                    return (
+                      <li
+                        key={entry}
+                        className="timeline-item"
+                        data-reveal
+                        data-reveal-index={index}
+                      >
+                        <span className="timeline-date">{date}</span>
+                        <span className="timeline-dot" aria-hidden="true" />
+                        <strong className="about-entry-title">{title}</strong>
+                        {detail && (
+                          <span className="about-entry-detail">{detail}</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
             </section>
           </div>
 
-          {/* 3. Research band (Full-width outside content container, drifts right to left) */}
-          <WorkBand
-            id="research"
-            title="Research"
-            direction="rtl"
-            items={researchItems}
-            onOpenWindow={handleOpenWindow}
-          />
+          {/* 3. Research index (an editorial list, unlike the Projects cards) */}
+          <ResearchList items={researchItems} onOpenWindow={handleOpenWindow} />
 
           {/* 4. Projects band (Full-width outside content container, drifts left to right) */}
           <WorkBand
@@ -583,7 +594,7 @@ export default function PortfolioView({
             onOpenWindow={handleOpenWindow}
           />
 
-          {/* 5. Technology marquee */}
+          {/* 5. Technology: two lines that meet in the middle */}
           <section
             id="stack"
             className="stack-section"
@@ -597,43 +608,7 @@ export default function PortfolioView({
               </div>
             </div>
 
-            <div
-              className="stack-marquee-viewport"
-              tabIndex={0}
-              role="group"
-              aria-label="Technology stack"
-              data-reveal
-            >
-              <div className="stack-marquee-track">
-                {[0, 1].map((copyIndex) => {
-                  const isClone = copyIndex > 0;
-                  return (
-                    <div
-                      key={copyIndex}
-                      className={`stack-marquee-set ${
-                        isClone ? 'stack-marquee-clone' : ''
-                      }`}
-                      aria-hidden={isClone ? 'true' : undefined}
-                    >
-                      {stackGroups.map((group) => (
-                        <div key={group.label} className="stack-marquee-group">
-                          <span className="stack-marquee-group-label">
-                            {group.label}
-                          </span>
-                          <ul className="stack-marquee-list">
-                            {group.items.map((tech) => (
-                              <li key={tech} className="stack-marquee-item">
-                                {tech}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <TechStackDuet stack={stack} />
           </section>
         </main>
 

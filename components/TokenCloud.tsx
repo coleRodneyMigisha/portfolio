@@ -20,6 +20,12 @@ const TOKENS = [
   'pip',
 ] as const;
 
+// While the tagline's "book" is hovered the cloud spells out the book's title
+const BOOK_TOKENS = ['automate', 'the', 'boring', 'stuff'] as const;
+const ATLAS_TOKENS: readonly string[] = [...TOKENS, ...BOOK_TOKENS];
+const BOOK_SPEED_BOOST = 1.8;
+const BOOK_SWAP_SEC = 0.7; // Time for every token to turn into a title word
+
 const FPS_CAP = 30;
 const FRAME_INTERVAL_MS = 1000 / FPS_CAP;
 const ALPHA_BUCKETS = [0.06, 0.09, 0.13, 0.17, 0.21, 0.25] as const;
@@ -49,6 +55,8 @@ interface CloudParticle {
   cosRadialDiff: number;
   sinRadialDiff: number;
   bucketIdx: number;
+  bookTokenIndex: number;
+  bookThreshold: number; // 0..1, when this token swaps during the cascade
 }
 
 function createSeededRandom(seed: number) {
@@ -94,6 +102,12 @@ export default function TokenCloud() {
     let bucketDrawY: Float32Array[] = [];
 
     let simTimeSec = 0;
+    let isBookMode =
+      typeof document !== 'undefined'
+        ? document.documentElement.hasAttribute('data-book-egg')
+        : false;
+    let bookMix = isBookMode ? 1 : 0;
+    let speedFactor = isBookMode ? BOOK_SPEED_BOOST : 1;
     let lastTimestamp = 0;
 
     // Laptops run at up to 60fps and the cloud parts around the cursor
@@ -137,6 +151,15 @@ export default function TokenCloud() {
       return raw || '#C79A5B';
     };
 
+    const readBookColor = (): string => {
+      if (typeof window === 'undefined') return '#F4C25B';
+      const raw = window
+        .getComputedStyle(document.documentElement)
+        .getPropertyValue('--book')
+        .trim();
+      return raw || '#F4C25B';
+    };
+
     const readFontFamily = (): string => {
       if (typeof window === 'undefined') return 'monospace';
       const raw = window
@@ -160,7 +183,7 @@ export default function TokenCloud() {
 
       measureCtx.font = `400 ${fontSizeCss}px ${fontFamily}`;
 
-      const measuredWidths = TOKENS.map((token) =>
+      const measuredWidths = ATLAS_TOKENS.map((token) =>
         Math.ceil(measureCtx.measureText(token).width + cellPad * 2)
       );
       const totalWidthCss = measuredWidths.reduce((sum, w) => sum + w, 0);
@@ -175,16 +198,17 @@ export default function TokenCloud() {
       ctx.font = `400 ${fontSizeCss}px ${fontFamily}`;
       ctx.textBaseline = 'middle';
       ctx.textAlign = 'center';
-      ctx.fillStyle = currentAccent;
+      const bookColor = readBookColor();
 
       const nextCells: SpriteCell[] = [];
       let cursorX = 0;
 
-      for (let i = 0; i < TOKENS.length; i++) {
+      for (let i = 0; i < ATLAS_TOKENS.length; i++) {
         const wCss = measuredWidths[i];
         const centerX = cursorX + wCss / 2;
         const centerY = cellHeightCss / 2;
-        ctx.fillText(TOKENS[i], centerX, centerY);
+        ctx.fillStyle = i < TOKENS.length ? currentAccent : bookColor;
+        ctx.fillText(ATLAS_TOKENS[i], centerX, centerY);
 
         nextCells.push({
           sx: Math.round(cursorX * dpr),
@@ -254,6 +278,9 @@ export default function TokenCloud() {
           cosRadialDiff: Math.cos(phaseDiff),
           sinRadialDiff: Math.sin(phaseDiff),
           bucketIdx,
+          bookTokenIndex: TOKENS.length + (i % BOOK_TOKENS.length),
+          // A hash rather than rand() so the cloud's layout stays as it was
+          bookThreshold: (Math.imul(i + 1, 2654435761) >>> 0) / 4294967296,
         });
       }
 
@@ -369,10 +396,12 @@ export default function TokenCloud() {
           }
         }
 
-        const cell = spriteCells[p.tokenIndex];
+        const tokenIndex =
+          bookMix > p.bookThreshold ? p.bookTokenIndex : p.tokenIndex;
+        const cell = spriteCells[tokenIndex];
         const bIdx = p.bucketIdx;
         const slot = bucketCounts[bIdx];
-        bucketTokenIndices[bIdx][slot] = p.tokenIndex;
+        bucketTokenIndices[bIdx][slot] = tokenIndex;
         bucketDrawX[bIdx][slot] = x - cell.drawW * 0.5;
         bucketDrawY[bIdx][slot] = y - cell.drawH * 0.5;
         bucketCounts[bIdx] = slot + 1;
@@ -429,7 +458,15 @@ export default function TokenCloud() {
       if (elapsed >= frameIntervalMs) {
         // Clamp delta so returning from a paused tab doesn't jump
         const dtSec = Math.min(elapsed, 100) / 1000;
-        simTimeSec += dtSec;
+        const bookTarget = isBookMode ? 1 : 0;
+        const swapStep = dtSec / BOOK_SWAP_SEC;
+        bookMix =
+          bookMix < bookTarget
+            ? Math.min(bookTarget, bookMix + swapStep)
+            : Math.max(bookTarget, bookMix - swapStep);
+        const speedTarget = isBookMode ? BOOK_SPEED_BOOST : 1;
+        speedFactor += (speedTarget - speedFactor) * (1 - Math.exp(-dtSec / 0.35));
+        simTimeSec += dtSec * speedFactor;
         lastTimestamp = timestamp - (elapsed % frameIntervalMs);
         renderCloudFrame(simTimeSec);
       }
@@ -492,6 +529,16 @@ export default function TokenCloud() {
       if (nextModalOpen !== isModalOpen) {
         isModalOpen = nextModalOpen;
         syncLoopState();
+      }
+      const nextBookMode =
+        document.documentElement.hasAttribute('data-book-egg');
+      if (nextBookMode !== isBookMode) {
+        isBookMode = nextBookMode;
+        if (prefersReducedMotion) {
+          // No cascade or speed-up, just show the title words
+          bookMix = isBookMode ? 1 : 0;
+          renderCloudFrame(0);
+        }
       }
       const nextAccent = readAccentColor();
       if (nextAccent !== currentAccent || !atlasCanvas) {
@@ -590,7 +637,12 @@ export default function TokenCloud() {
           mutationObserver = new MutationObserver(handleRootAttributeChange);
           mutationObserver.observe(document.documentElement, {
             attributes: true,
-            attributeFilter: ['data-theme', 'class', 'data-modal-open'],
+            attributeFilter: [
+              'data-theme',
+              'class',
+              'data-modal-open',
+              'data-book-egg',
+            ],
           });
         }
 
