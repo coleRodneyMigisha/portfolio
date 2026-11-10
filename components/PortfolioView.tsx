@@ -617,6 +617,7 @@ export default function PortfolioView({
           <div className="site-shell site-footer-inner">
             <div className="site-footer-top">
               <p className="footer-brand">{site.brandName}</p>
+              <HeavenSnippet />
               <nav aria-label="Profile and contact links">
                 <ul className="inline-link-list">
                   {visibleSiteLinks.map((link) => {
@@ -667,13 +668,10 @@ export default function PortfolioView({
               </nav>
             </div>
 
-            <div className="footer-meta-row">
-              <HeavenSnippet />
-
+            <div className="footer-bottom-row">
+              <CopyrightLine name={site.brandName} />
               <HeartbeatStatus />
             </div>
-
-            <CopyrightLine name={site.brandName} />
           </div>
         </footer>
       </div>

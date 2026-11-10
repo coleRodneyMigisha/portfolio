@@ -3,7 +3,7 @@
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import type { StackConfig } from '@/lib/content';
 
-const STEP_MS = 1000;
+const STEP_MS = 2000;
 // Words either side of the centre; enough to fill the widest screens
 const SLOTS_EACH_SIDE = 10;
 
