@@ -36,6 +36,8 @@
     "pytest",
     "Evidently",
     "PySide6",
+    "Rust",
+    "GTK 4",
     "Blender",
     "Arduino",
     "DuckDB",

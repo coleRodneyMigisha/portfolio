@@ -2,7 +2,7 @@
 title: "StudyRoom"
 slug: "studyroom"
 kind: "project"
-summary: "A study site for three of my course units, with step-through lessons, labs that run Python in the browser, mock exams, and an AI study buddy grounded in our lecturers' own slides."
+summary: "A study site for four of my course units, with step-through lessons, labs that run Python in the browser, mock exams, and an AI study buddy grounded in our lecturers' own slides."
 status: "Live"
 tags:
   - "Next.js"
@@ -33,7 +33,7 @@ Revising from slides alone wasn't working for me or my classmates. The slides li
 
 I built StudyRoom as two parts: a static Next.js site and a FastAPI service that does the AI work.
 
-- **Courses as content, not code.** Each course unit is a folder of YAML files: lessons, notes, worked examples, quizzes, exam questions and labs. A schema checks them on every build, so adding a course needs no application code. Three units run on it now: Computer Vision, Data Science Systems, and AI Model Deployment and Scaling.
+- **Courses as content, not code.** Each course unit is a folder of YAML files: lessons, notes, worked examples, quizzes, exam questions and labs. A schema checks them on every build, so adding a course needs no application code. Four units run on it now: Computer Vision, Data Science Systems, AI Model Deployment and Scaling, and Software Project Management.
 - **Grounded in the lecturer's materials.** Slides, notes and past papers go into a resources folder. The backend extracts the text from PDF, PowerPoint and Word files, indexes it, and retrieves the relevant passages for every buddy reply, grade and new question. Drafted content from those materials is reviewed before it's merged into a course.
 - **Labs that run in the browser.** Python and SQL exercises run on the student's own device through Pyodide, with hidden tests. A verification script runs every model solution against its tests, and checks that the starter code fails, before anything ships.
 - **A study buddy that sees the page.** Every page tells the buddy what the student is looking at: the lesson step, the lab values, their last answer and its score. Modes (nudge, hint, walkthrough, explain) decide how much it gives away.
@@ -43,4 +43,4 @@ Late in the build, I rewrote every module in plain language for someone who has 
 
 ## Where it stands
 
-It's live on Cloudflare Pages, with the API on Render. Classmates use it for revision, and the AI Deployment unit now includes our class's group presentations.
+It's live on Cloudflare Pages, with the API on Render. Classmates use it for revision. The AI Deployment unit now includes our class's group presentations, and Software Project Management went up the day before its exam, with critical-path, PERT, earned-value and risk drills.
